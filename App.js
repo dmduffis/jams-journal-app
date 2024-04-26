@@ -2,6 +2,7 @@ import {View, StyleSheet} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { ApolloProvider } from '@apollo/client';
 import client from './services/ApolloClientSetup';
+import BottomTabNavigation from './navigation/BottomTabNavigation'
 import { useFonts } from 'expo-font';
 import Home from './screens/Home';
 import AppLoading from 'expo-app-loading';
@@ -31,7 +32,7 @@ export default function App() {
   return (
     <ApolloProvider client={client}>
       <NavigationContainer>
-      <Home />
+      <BottomTabNavigation />
     </NavigationContainer>
     </ApolloProvider>
   );
