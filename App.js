@@ -1,9 +1,9 @@
 import {View, StyleSheet} from 'react-native';
-import styles from './app.style';
+import { NavigationContainer } from '@react-navigation/native';
 import { ApolloProvider } from '@apollo/client';
 import client from './services/ApolloClientSetup';
 import { useFonts } from 'expo-font';
-import Home from './Home';
+import Home from './screens/Home';
 import AppLoading from 'expo-app-loading';
 
 export default function App() {
@@ -30,9 +30,9 @@ export default function App() {
 
   return (
     <ApolloProvider client={client}>
-    <View style={styles.container}>
+      <NavigationContainer>
       <Home />
-    </View>
+    </NavigationContainer>
     </ApolloProvider>
   );
 }
