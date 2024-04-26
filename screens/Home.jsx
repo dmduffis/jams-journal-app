@@ -1,13 +1,13 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, ScrollView } from 'react-native'
 import React from 'react'
 import FeatureHeader from '../components/FeatureHeader'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const Home = () => {
   return (
-    <SafeAreaView>
+    <ScrollView>
       <FeatureHeader />
-    </SafeAreaView>
+    </ScrollView>
   )
 }
 
