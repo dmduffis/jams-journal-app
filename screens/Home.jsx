@@ -2,12 +2,16 @@ import { StyleSheet, Text, ScrollView } from 'react-native'
 import React from 'react'
 import FeatureHeader from '../components/FeatureHeader'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AuthorsRow from '../components/AuthorsRow'
 
 const Home = () => {
   return (
+    <SafeAreaView>
     <ScrollView>
       <FeatureHeader />
+      <AuthorsRow />
     </ScrollView>
+    </SafeAreaView>
   )
 }
 

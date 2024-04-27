@@ -16,7 +16,7 @@ const GET_CURRENT_ISSUE = gql`query {
 `
 
 
-const FeatureHeader = () => {
+  const FeatureHeader = () => {
 
   const navigation = useNavigation();
 
