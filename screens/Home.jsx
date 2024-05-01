@@ -11,7 +11,6 @@ const Home = () => {
     <ScrollView>
       <FeatureHeader />
       <AuthorsRow />
-      <BottomTabNavigation />
     </ScrollView>
     </SafeAreaView>
   )
