@@ -10,6 +10,7 @@ import AuthorDetails from './screens/AuthorDetails';
 import Article from './screens/Article';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect } from 'react';
+import IssueDetails from './screens/IssueDetails';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -23,6 +24,7 @@ export default function App() {
     serif_regular: require("./assets/fonts/IBMPlexSerif-Regular.ttf"),
     serif_semibold: require("./assets/fonts/IBMPlexSerif-SemiBold.ttf"),
     serif_bold: require("./assets/fonts/IBMPlexSerif-Bold.ttf"),
+    serif_italic: require("./assets/fonts/IBMPlexSerif-Italic.ttf"),
     serif_thin: require("./assets/fonts/IBMPlexSerif-Thin.ttf"),
     sans_light: require("./assets/fonts/IBMPlexSans-Light.ttf"),
     sans_medium: require("./assets/fonts/IBMPlexSans-Medium.ttf"),
@@ -70,6 +72,12 @@ export default function App() {
       <Stack.Screen 
             name="Article"
             component={Article}
+            options={{headerShown:false}}
+            />
+
+      <Stack.Screen 
+            name="Issue Details"
+            component= {IssueDetails}
             options={{headerShown:false}}
             />
 
