@@ -4,8 +4,10 @@ import { ApolloProvider } from '@apollo/client';
 import client from './services/ApolloClientSetup';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font';
+import * as Font from 'expo-font'
 import Home from './screens/Home';
 import AuthorDetails from './screens/AuthorDetails';
+import Article from './screens/Article';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect } from 'react';
 
@@ -62,6 +64,12 @@ export default function App() {
       <Stack.Screen 
             name="Author Details"
             component={AuthorDetails}
+            options={{headerShown:false}}
+            />
+
+      <Stack.Screen 
+            name="Article"
+            component={Article}
             options={{headerShown:false}}
             />
 

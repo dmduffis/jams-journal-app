@@ -37,13 +37,13 @@ const styles = StyleSheet.create({
         borderRadius: 50,
     },
     firstName: {
-        fontFamily: 'semibold',
+        fontFamily: 'sans_medium',
         fontSize: 11,
         paddingTop: 3,
         textAlign: 'center'
     },
     lastName: {
-        fontFamily: 'semibold',
+        fontFamily: 'sans_medium',
         fontSize: 11,
         paddingTop: 1,
         textAlign: 'center'
