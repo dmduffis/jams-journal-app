@@ -5,8 +5,8 @@ import ArticleComponent from '../components/ArticleComponent';
 import { useQuery, gql } from '@apollo/client';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useContext } from 'react';
-import { GlobalContext } from '../context/GlobalContext';
+// import { useContext } from 'react';
+// import { GlobalContext } from '../context/GlobalContext';
 
 
 const GET_AUTHOR_RESOURCES = gql`{
@@ -43,7 +43,7 @@ const GET_AUTHOR_RESOURCES = gql`{
 export default AuthorDetails = ({navigation}) => {
 
 
-  const { followedAuthors, following, updateFollowing } = useContext(GlobalContext);
+  // const { followedAuthors, following, updateFollowing } = useContext(GlobalContext);
 
   const route = useRoute({navigation});
   const { item } = route.params;
@@ -67,7 +67,7 @@ export default AuthorDetails = ({navigation}) => {
         <View style={styles.issueTitleContainer}>
         <Text style={styles.issueTitle}>{item.name}</Text>
         </View>
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
       onPress = {() => updateFollowing(item.id)}
       style={followedAuthors.includes(item.id) ? 
         { 
@@ -99,8 +99,13 @@ export default AuthorDetails = ({navigation}) => {
         justifyContent: 'center',
         borderRadius: 15,}}>
       
-      <View style={styles.follow}><Text style={{fontFamily: 'sans_bold',
-      fontSize: 15, color: followedAuthors.includes(item.id) ? '#007caf' : 'white'}}>{ followedAuthors.includes(item.id) ? 'Following' : 'Follow' }</Text></View></TouchableOpacity>
+      <View style={styles.follow}>
+        <Text style={{fontFamily: 'sans_bold',
+      fontSize: 15, color: followedAuthors.includes(item.id) ? '#007caf' : 'white'}}>{ followedAuthors.includes(item.id) ? 'Following' : 'Follow' }
+      </Text>
+      </View>
+
+      </TouchableOpacity> */}
         </View>
 
         <View style={styles.detailsContainter}>

@@ -3,9 +3,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { ApolloProvider } from '@apollo/client';
 import client from './services/ApolloClientSetup';
 import BottomTabNavigation from './navigation/BottomTabNavigation'
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import StackNavigation from './navigation/StackNavigation';
 import { useFonts } from 'expo-font';
 import Home from './screens/Home';
+import AuthorDetails from './screens/AuthorDetails';
 import AppLoading from 'expo-app-loading';
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
 
@@ -32,7 +37,21 @@ export default function App() {
   return (
     <ApolloProvider client={client}>
       <NavigationContainer>
-      <BottomTabNavigation />
+      <Stack.Navigator>
+      
+      <Stack.Screen 
+            name="Home"
+            component={Home}
+            options={{headerShown:false}}
+            />
+
+      <Stack.Screen 
+            name="Author Details"
+            component={AuthorDetails}
+            options={{headerShown:false}}
+            />
+
+    </Stack.Navigator>
     </NavigationContainer>
     </ApolloProvider>
   );
