@@ -4,13 +4,14 @@ import { useQuery, gql } from '@apollo/client';
 import { useNavigation } from '@react-navigation/native';
 
 const GET_CURRENT_ISSUE = gql`query {
-  journal(where: {id: "clv0smz26blld07ltazc2py31"}) {
-    issue
-    title
-    year
+  journals {
     coverPhoto {
       url
     }
+    id
+    issue
+    title
+    year
   }
 }
 `
@@ -25,7 +26,7 @@ const GET_CURRENT_ISSUE = gql`query {
   if (loading) return null;
   if (error) return `Error! ${error}`;
 
-  const item = data.journal
+  const item = data.journals[1]
 
   return (
     <View style={styles.container}>
