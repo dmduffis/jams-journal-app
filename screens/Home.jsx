@@ -3,15 +3,16 @@ import React from 'react'
 import FeatureHeader from '../components/FeatureHeader'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AuthorsRow from '../components/AuthorsRow'
-import BottomTabNavigation from '../navigation/BottomTabNavigation'
+import IssuesRow from '../components/IssuesRow'
 
 const Home = () => {
   return (
     <SafeAreaView>
-    <ScrollView>
+      <ScrollView>
       <FeatureHeader />
-      <AuthorsRow />
-    </ScrollView>
+        <IssuesRow />
+        <AuthorsRow />
+      </ScrollView>
     </SafeAreaView>
   )
 }
