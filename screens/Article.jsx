@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useQuery, gql } from '@apollo/client';
 import Markdown from 'react-native-markdown-display';
 import { useRoute } from '@react-navigation/native';
+import ArticleAuthors from '../components/ArticleAuthors';
 
 
 const Article = () => {
@@ -16,10 +17,7 @@ return (
     <View>
       {item.authors.map((author) => {
         return (
-      <View key={item.id.toString()} style={{flexDirection: 'row', alignItems: 'center', paddingBottom: 30}}>
-      <Image key={item.url} source={{uri: author.photo.url}} style={{borderRadius: 50, width: 35, height: 35, paddingRight: 10}} />
-      <Text key={item.title} style={{fontFamily: 'sans_semibold', fontSize: 16, paddingLeft: 10}}>{author.name}</Text>
-    </View>
+      <ArticleAuthors author = {author} key = {author.id} />
     )})}
     </View>
 
