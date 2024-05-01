@@ -1,12 +1,18 @@
-import { StyleSheet, Text, View, Image } from 'react-native'
+import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native'
 import React from 'react'
+import { useNavigation } from '@react-navigation/native'
 
 const Author = ({item}) => {
+
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
+        <TouchableOpacity onPress={() => navigation.navigate('Author Details', {item})}>
         <Image style={styles.photo} source={{uri: item.photo.url}}/>
       <Text style={styles.firstName}>{item.firstName}</Text>
       <Text style={styles.lastName}>{item.lastName}</Text>
+      </TouchableOpacity>
     </View>
   )
 }
