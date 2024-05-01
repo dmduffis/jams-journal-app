@@ -28,17 +28,6 @@ const screenOptions = {
 export default function BottomTabNavigation() {
     return (
       <Tab.Navigator screenOptions={screenOptions}>
-        <Tab.Screen
-        name="Home"
-        component={Home}
-        options = {{
-            tabBarIcon: ({focused}) => {
-                return <Ionicons 
-                name={focused? "home" : "home-outline"} 
-                size={24}
-                color={focused? 'blue': 'gray'} />
-            }
-            }}/>
 
         <Tab.Screen
         name="Search"

@@ -2,13 +2,14 @@ import {View, StyleSheet} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { ApolloProvider } from '@apollo/client';
 import client from './services/ApolloClientSetup';
-import BottomTabNavigation from './navigation/BottomTabNavigation'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import StackNavigation from './navigation/StackNavigation';
 import { useFonts } from 'expo-font';
 import Home from './screens/Home';
 import AuthorDetails from './screens/AuthorDetails';
-import AppLoading from 'expo-app-loading';
+import * as SplashScreen from 'expo-splash-screen';
+import { useCallback, useEffect } from 'react';
+
+SplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator();
 
@@ -29,14 +30,27 @@ export default function App() {
     sans_bold: require("./assets/fonts/IBMPlexSans-Bold.ttf"),
   });
 
-  if (!fontsLoaded) {
-    return <AppLoading />;
-  }
+  useEffect(() => {
+    async function prepare() {
+      await SplashScreen.preventAutoHideAsync();
+    }
+    prepare();
+  }, []);
 
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <ApolloProvider client={client}>
-      <NavigationContainer>
+      <NavigationContainer
+      onReady={onLayoutRootView}>
       <Stack.Navigator>
       
       <Stack.Screen 
