@@ -12,7 +12,7 @@ const ArticleListItem = ({item}) => {
             <View style={styles.articlesContainer}>
             <View style={styles.articleInfo}>
             <Text style={styles.articleTitle}>{item.title}</Text>
-            {item.authors.map((author) => <Text key={item.id} style={styles.articleAuthor}>{author.name}</Text>)}
+            {item.authors.map((author) => <Text key={author.id} style={styles.articleAuthor}>{author.name}</Text>)}
             </View>
             <View>
               <Ionicons style={{paddingTop: 15}}
