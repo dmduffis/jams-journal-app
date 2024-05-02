@@ -16,9 +16,9 @@ const VideoListItem = ({item}) => {
             </View>
             <View>
               <Ionicons style={{paddingTop: 15, paddingRight: 5,}}
-              name='play-circle'
+              name='play-circle-outline'
               size={20}
-              color='gray'
+              color= 'gray'
               />
             </View>
             </View>
