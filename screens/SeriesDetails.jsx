@@ -1,9 +1,11 @@
-import { Text, StyleSheet, View, Image, ScrollView} from 'react-native'
-import React, { Component } from 'react'
+import { Text, StyleSheet, View, Image, ScrollView, TouchableOpacity} from 'react-native'
+import React, { Component, useState } from 'react'
 import { useRoute } from '@react-navigation/native'
 import { useQuery, gql } from '@apollo/client';
 import ArticleListItem from '../components/ArticleListItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import YoutubeIframe from 'react-native-youtube-iframe';
+import VideoListItem from '../components/VideoListItem';
 // import { useContext } from 'react';
 // import { GlobalContext } from '../context/GlobalContext';
 
@@ -30,37 +32,47 @@ const GET_SERIES_DETAILS = gql`{
 
 export default SeriesDetails = ({navigation}) => {
 
+const route = useRoute({navigation});
+const { item } = route.params;
 
-  // const { followedAuthors, following, updateFollowing } = useContext(GlobalContext);
 
-  const route = useRoute({navigation});
-  const { item } = route.params;
+const [playing, setPlaying] = useState(false);
 
-  const { loading, error, data } = useQuery(GET_SERIES_DETAILS)
 
-  if (loading) return null;
-  if (error) return `Error! ${error}`;
+const { loading, error, data } = useQuery(GET_SERIES_DETAILS)
 
-  const seriesData = data.seriesies.filter((series) => series.id === item.id)
+if (loading) return null;
+if (error) return `Error! ${error}`;
 
-  const videos = seriesData[0].videos
+const seriesData = data.seriesies.filter((series) => series.id === item.id)
+
+const videos = seriesData[0].videos
+
+const [videoID, setVideoID] = useState(videos[0].youtubeId);
 
     return (
-<SafeAreaView style={styles.container}>
-<ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
+<SafeAreaView>
+<ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         
         <View>
-        <View style={styles.issueTitleContainer}>
-        <Text style={styles.issueTitle}>{item.title}</Text>
-        <Text style={styles.issueDetails}>Volume {item.year}</Text>
-        </View>
+            <YoutubeIframe 
+              height={220}
+              play={playing}
+              videoId={videoID}
+            />
         </View>
 
-        <View style={styles.detailsContainter}>
+        <View style={styles.detailsContainer}>
+            <View style={styles.issueTitleContainer}>
+                <Text style={styles.issueTitle}>{item.title}</Text>
+                <Text style={styles.issueDetails}>{item.event} | {item.year}</Text>
+            </View>
         <View>
         {videos.map((item) => {
           return (
-          <ArticleListItem item={item} key={item.id} />
+        <TouchableOpacity onPress={() => setVideoID(item.youtubeId)}>
+          <VideoListItem item={item} key={item.id}/>
+        </TouchableOpacity>
         ) 
         })}
     </View>
@@ -72,48 +84,34 @@ export default SeriesDetails = ({navigation}) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 50,
-    paddingBottom: 50,
     display: 'flex',
-    flex: 1
+    height: '100%'
   },
-  coverImg: {
-    width: 120,
-    height: 185,
-    borderRadius: 5,
-    alignSelf: 'center',
-    marginTop: 75,
-},
-  detailsContainter: {
+  detailsContainer: {
     height: '100%',
     padding: 30,
     backgroundColor: '#fff',
-    borderRadius: 30,
-    marginTop: 40,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   issueTitleContainer: {
+    flexDirection: 'column',
+    borderColor: 'gray',
+    borderBottomWidth: 0.75,
     borderStyle: 'solid',
     borderBottomColor: 'gray',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    paddingTop: 20,
+    paddingBottom: 20,
+    marginBottom: 20,
   },
   issueTitle: {
     fontFamily: 'sans_bold',
     fontSize: 24,
     paddingBottom: 3,
-    paddingLeft: 30,
-    paddingRight: 30,
-    textAlign: 'center'
   },
   issueDetails: {
     fontFamily: 'sans_medium',
-    fontSize: 14,
+    fontSize: 16,
     paddingBottom: 5,
-    paddingLeft: 20,
-    paddingRight: 20,
     color: 'gray'
   },
   articlesContainer: {
