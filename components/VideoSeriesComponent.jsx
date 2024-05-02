@@ -9,7 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate ("Issue Details", {item})}>
+      <TouchableOpacity onPress={() => navigation.navigate ("Series Details", {item})}>
         <Image style={styles.featuredImg} source={{uri: item.coverPhoto.url}}/>
       <View style={styles.txtContainer}>
         <Text style={styles.txtIssueTitle} numberOfLines={1}>{item.title}</Text>

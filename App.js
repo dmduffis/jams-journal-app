@@ -13,6 +13,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect } from 'react';
 import IssueDetails from './screens/IssueDetails';
 import Videos from './components/VideoSeriesComponent';
+import SeriesDetails from './screens/SeriesDetails';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -86,6 +87,12 @@ export default function App() {
       <Stack.Screen 
             name="Videos"
             component= {Videos}
+            options={{headerShown:false}}
+            />
+      
+      <Stack.Screen 
+            name="Series Details"
+            component= {SeriesDetails}
             options={{headerShown:false}}
             />
 
