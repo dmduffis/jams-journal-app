@@ -70,8 +70,8 @@ const [videoID, setVideoID] = useState(videos[0].youtubeId);
         <View>
         {videos.map((item) => {
           return (
-        <TouchableOpacity onPress={() => setVideoID(item.youtubeId)}>
-          <VideoListItem item={item} key={item.id}/>
+        <TouchableOpacity onPress={() => setVideoID(item.youtubeId)} key={item.id}>
+          <VideoListItem item={item}/>
         </TouchableOpacity>
         ) 
         })}

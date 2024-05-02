@@ -6,7 +6,7 @@ import VideoSeriesRow from '../components/VideoSeriesRow'
 const Videos = () => {
   return (
     <SafeAreaView>
-      < VideoSeriesRow />
+      <VideoSeriesRow />
     </SafeAreaView>
   )
 }

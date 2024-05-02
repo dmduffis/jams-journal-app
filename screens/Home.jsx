@@ -9,7 +9,7 @@ const Home = () => {
   return (
     <>
     <SafeAreaView>
-      <ScrollView>
+      <ScrollView style = {{height: '100%'}}>
       <FeatureHeader />
         <IssuesRow />
         <AuthorsRow />
