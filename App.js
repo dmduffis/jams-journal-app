@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { ApolloProvider } from '@apollo/client';
 import client from './services/ApolloClientSetup';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import BottomTabNavigation from './navigation/BottomTabNavigation';
 import { useFonts } from 'expo-font';
 import * as Font from 'expo-font'
 import Home from './screens/Home';
@@ -11,6 +12,7 @@ import Article from './screens/Article';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect } from 'react';
 import IssueDetails from './screens/IssueDetails';
+import Videos from './components/VideoSeriesComponent';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -58,8 +60,8 @@ export default function App() {
       <Stack.Navigator>
       
       <Stack.Screen 
-            name="Home"
-            component={Home}
+            name="Main"
+            component={BottomTabNavigation}
             options={{headerShown:false}}
             />
 
@@ -80,6 +82,13 @@ export default function App() {
             component= {IssueDetails}
             options={{headerShown:false}}
             />
+
+      <Stack.Screen 
+            name="Videos"
+            component= {Videos}
+            options={{headerShown:false}}
+            />
+
 
     </Stack.Navigator>
     </NavigationContainer>

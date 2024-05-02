@@ -7,6 +7,7 @@ import IssuesRow from '../components/IssuesRow'
 
 const Home = () => {
   return (
+    <>
     <SafeAreaView>
       <ScrollView>
       <FeatureHeader />
@@ -14,6 +15,7 @@ const Home = () => {
         <AuthorsRow />
       </ScrollView>
     </SafeAreaView>
+    </>
   )
 }
 

@@ -29,6 +29,18 @@ export default function BottomTabNavigation() {
     return (
       <Tab.Navigator screenOptions={screenOptions}>
 
+    <Tab.Screen
+        name="Home"
+        component={Home}
+        options = {{
+            tabBarIcon: ({focused}) => {
+                return <Ionicons 
+                name={"home"}
+                size={24}
+                color={focused? 'blue': 'gray'} />
+            }
+            }}/>
+
         <Tab.Screen
         name="Search"
         component={Search}
