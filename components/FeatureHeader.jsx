@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
         width: '100vw',
         marginLeft: 20,
         marginRight: 20,
-        marginBottom: 10,
+        marginBottom: 20,
         marginTop: 10,
         borderRadius: 10,
         paddingBottom: 10,
