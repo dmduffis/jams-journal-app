@@ -110,8 +110,8 @@ export default AuthorDetails = ({navigation}) => {
 
         <View style={styles.detailsContainter}>
         <View>
-        {articles.map((item) => {
-          return (<TouchableOpacity onPress={() => navigation.navigate ("Article", {item})}>
+        {articles.map((item, i) => {
+          return (<TouchableOpacity key={i} onPress={() => navigation.navigate ("Article", {item})}>
             <View style={styles.articlesContainer}>
             <View style={styles.articleInfo}>
             <Text style={styles.articleTitle}>{item.title}</Text>
