@@ -12,8 +12,18 @@ const GET_SERIES = gql`query {
       coverPhoto {
         url
       }
+      videos {
+        authors {
+          name
+          id
+        }
+        id
+        title
+        youtubeId
+        url
+      }
     }
-  }
+  }  
   `
 
 const VideoSeriesRow = () => {
