@@ -6,8 +6,6 @@ import ArticleListItem from '../components/ArticleListItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import YoutubeIframe from 'react-native-youtube-iframe';
 import VideoListItem from '../components/VideoListItem';
-// import { useContext } from 'react';
-// import { GlobalContext } from '../context/GlobalContext';
 
 
 const GET_SERIES_DETAILS = gql`{
@@ -70,8 +68,9 @@ const [videoID, setVideoID] = useState(videos[0].youtubeId);
         <View>
         {videos.map((item) => {
           return (
-        <TouchableOpacity onPress={() => setVideoID(item.youtubeId)} key={item.id}>
-          <VideoListItem item={item}/>
+        <TouchableOpacity onPress={() => {
+            videoID === item.id? {}: setVideoID(item.youtubeId); setPlaying(true)}} key={item.id}>
+          <VideoListItem item={item} videoID={videoID}/>
         </TouchableOpacity>
         ) 
         })}
@@ -101,7 +100,7 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
     borderBottomColor: 'gray',
     paddingBottom: 20,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   issueTitle: {
     fontFamily: 'sans_bold',
