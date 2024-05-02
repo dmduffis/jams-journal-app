@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
           fontSize: 17,
           paddingTop: 15,
           width: 300,
+          color: '#303030'
         },
         articleAuthor: {
           fontFamily: 'sans_medium',

@@ -61,6 +61,7 @@ export default IssueDetails = ({navigation}) => {
         <Image style={styles.coverImg} source={{uri: item.coverPhoto.url}} />
         <View style={styles.issueTitleContainer}>
         <Text style={styles.issueTitle}>{item.title}</Text>
+        <Text style={styles.issueDetails}>Volume {item.issue}</Text>
         </View>
         </View>
 
@@ -100,14 +101,27 @@ const styles = StyleSheet.create({
   issueTitleContainer: {
     borderStyle: 'solid',
     borderBottomColor: 'gray',
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
     paddingTop: 20,
   },
   issueTitle: {
     fontFamily: 'sans_bold',
-    fontSize: 25,
-    paddingBottom: 10,
+    fontSize: 24,
+    paddingBottom: 3,
+    paddingLeft: 30,
+    paddingRight: 30,
+    textAlign: 'center'
+  },
+  issueDetails: {
+    fontFamily: 'sans_medium',
+    fontSize: 14,
+    paddingBottom: 5,
+    paddingLeft: 20,
+    paddingRight: 20,
+    color: 'gray'
   },
   articlesContainer: {
     paddingBottom: 15,
