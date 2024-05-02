@@ -33,7 +33,7 @@ if (error) return `Error! ${error}`;
     data={data.authors.filter((item) => item.featured === true)}
     keyExtractor={item => item.id}
     renderItem={({item}) => 
-        (<Author item = {item} key={item.id}/>) 
+        (<Author item={item} key={item.id}/>) 
     }
     horizontal
     showsHorizontalScrollIndicator={false}

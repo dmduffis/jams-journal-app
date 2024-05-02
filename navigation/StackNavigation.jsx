@@ -28,6 +28,5 @@ export default StackNavigation = () => {
             options={{headerShown:false}}
             />
 
-
         </Stack.Navigator>
     }
