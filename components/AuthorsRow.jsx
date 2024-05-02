@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         color: 'black',
         fontFamily: 'sans_semibold',
-        fontSize: 18,
+        fontSize: 20,
         marginBottom: 10,
     }
 })

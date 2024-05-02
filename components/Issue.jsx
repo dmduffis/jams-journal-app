@@ -21,17 +21,17 @@ export default Issue
 
 const styles = StyleSheet.create({
     container: {
-        width: 130,
+        width: 160,
     },
     coverImg: {
-        width: 110,
-        height: 170,
+        width: 145,
+        height: 220,
         borderRadius: 5,
     },
     titleIssue: {
         color: 'black',
         fontFamily: 'sans_medium',
-        fontSize: 13,
+        fontSize: 15,
         marginTop: 5,
     },
     dateIssue: {

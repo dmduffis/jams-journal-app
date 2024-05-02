@@ -7,15 +7,13 @@ import IssuesRow from '../components/IssuesRow'
 
 const Home = () => {
   return (
-    <>
-    <SafeAreaView>
+    <SafeAreaView style={{backgroundColor: '#FAF9F6'}}>
       <ScrollView style = {{height: '100%'}}>
       <FeatureHeader />
         <IssuesRow />
         <AuthorsRow />
       </ScrollView>
     </SafeAreaView>
-    </>
   )
 }
 
