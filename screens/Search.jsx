@@ -1,7 +1,7 @@
 import React from 'react'
 import { useQuery, gql, useLazyQuery } from "@apollo/client";
 import { useState } from "react";
-import { Button, StyleSheet, View, Text, TextInput } from 'react-native';
+import { Button, StyleSheet, View, Text, TextInput, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const GET_ALBUMS = gql`
@@ -11,6 +11,7 @@ const GET_ALBUMS = gql`
         text
       }
       title
+      id
       authors {
         name
       }
@@ -31,7 +32,7 @@ function Search() {
 
   const getSearchResults = () => {
     const results = data.articles.filter((article) => article.content.text.includes(searchInput) || article.title.includes(searchInput))
-    console.log(results.map((result) => result.title))
+    setArticleData(results)
   }
 
   return (
@@ -51,6 +52,21 @@ function Search() {
         onPress={() => getSearchResults()}
         color='black'
         />
+
+      <View style={styles.container}>
+        <FlatList
+        data={articleData}
+        keyExtractor={item => item.id}
+        renderItem={({item}) => 
+            (<Text key={item.id}>{item.title}</Text>) 
+        }
+        vertical
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        contentContainerStyle={{columnGap: 10 }}>
+        </FlatList>
+      </View>
+
     </SafeAreaView>
   );
 }
