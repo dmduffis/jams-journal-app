@@ -23,7 +23,14 @@ const GET_ALBUMS = gql`
 function Search() {
 
   const [searchInput, setSearchInput] = useState('');
-  const [articleData, setArticleData] = useState([]);
+  const [articleData, setArticleData] = useState();
+
+  const noData = [
+    {
+    title: 'No results found',
+    id: 1,
+    }
+  ]
 
   const {data, loading, error, refetch} = useQuery(GET_ALBUMS)
 
@@ -32,7 +39,8 @@ function Search() {
 
   const getSearchResults = () => {
     const results = data.articles.filter((article) => article.content.text.includes(searchInput) || article.title.includes(searchInput))
-    setArticleData(results)
+    results.length !== 0 ? setArticleData(results) : setArticleData(noData)
+    console.log(results)
   }
 
   return (
@@ -58,7 +66,7 @@ function Search() {
         data={articleData}
         keyExtractor={item => item.id}
         renderItem={({item}) => 
-            (<Text key={item.id}>{item.title}</Text>) 
+            (<Text style={{paddingTop: 10, paddingLeft: 20, paddingRight: 20, paddingBottom: 10 }} key={item.id}>{item.title}</Text>) 
         }
         vertical
         showsVerticalScrollIndicator={false}
