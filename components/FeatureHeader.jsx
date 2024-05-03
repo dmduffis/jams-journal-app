@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.5,
         borderColor: '#D4D4D4',
         borderStyle: 'solid',
-        backgroundColor: '#f0f0e4'
+        backgroundColor: '#fff'
     },
     featuredImg: {
         width: 105,
