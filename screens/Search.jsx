@@ -45,7 +45,7 @@ function Search() {
 
   return (
     <SafeAreaView>
-      <Text>Albums</Text>
+      <Text style={{paddingTop: 10, paddingLeft: 20, paddingRight: 20, paddingBottom: 10 }}>Search</Text>
 
       <View>
         <TextInput style={styles.input}
