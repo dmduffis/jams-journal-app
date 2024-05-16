@@ -49,12 +49,11 @@ function Search() {
     const results = data.articles.filter((article) => article.content.text.includes(searchInput) || article.title.includes(searchInput))
     results.length !== 0 ? setArticleData(results) : setArticleData(noData)
     results.length !== 0 ? setDataExists(true) : setDataExists(false);
-    console.log(results)
   }
 
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{marginBottom: 100}}>
       <View>
         <TextInput style={styles.input}
           onChangeText={setSearchInput}
@@ -85,6 +84,9 @@ function Search() {
 export default Search;
 
 const styles = StyleSheet.create({
+  container: {
+    paddingBottom: 50,
+  },
   input: {
     height: 45,
     marginLeft: 12,
@@ -95,6 +97,5 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     padding: 15,
     backgroundColor: '#FFF',
-    
   },
 });

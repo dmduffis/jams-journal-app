@@ -120,7 +120,7 @@ export default AuthorDetails = ({navigation}) => {
             <View>
               <Ionicons style={{paddingTop: 15}}
               name='chevron-forward-outline'
-              size={20}
+              size={12}
               color='gray'
               />
             </View>

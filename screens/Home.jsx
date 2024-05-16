@@ -7,7 +7,7 @@ import IssuesRow from '../components/IssuesRow'
 
 const Home = () => {
   return (
-    <SafeAreaView style={{backgroundColor: '#f9f5f0'}}>
+    <SafeAreaView>
       <ScrollView style = {{height: '100%'}}>
       <FeatureHeader />
         <IssuesRow />

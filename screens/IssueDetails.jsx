@@ -84,18 +84,18 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   coverImg: {
-    width: 120,
-    height: 185,
+    width: 150,
+    height: 225,
     borderRadius: 5,
     alignSelf: 'center',
-    marginTop: 75,
+    marginTop: 85,
 },
   detailsContainter: {
     height: '100%',
     padding: 30,
     backgroundColor: '#fff',
     borderRadius: 30,
-    marginTop: 40,
+    marginTop: 30,
     height: '100%',
   },
   issueTitleContainer: {

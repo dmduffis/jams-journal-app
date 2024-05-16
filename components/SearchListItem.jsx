@@ -17,7 +17,7 @@ const SearchListItem = ({item, noData, dataExists}) => {
             <View>
               {dataExists ? (<Ionicons
               name='chevron-forward-outline'
-              size={20}
+              size={12}
               color='gray'
               />) : ''}
             </View>
@@ -30,28 +30,25 @@ export default SearchListItem
 
 const styles = StyleSheet.create({
     articlesContainer: {
-        padding: 15,
+        padding: 30,
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: '#FFF',
-        marginTop: 5,
-        marginBottom: 5,
-        marginLeft: 10,
-        marginRight: 10,
+        marginBottom: 1,
         borderRadius: 5,
         },
       articleTitle: {
           fontFamily: 'sans_semibold',
-          fontSize: 17,
+          fontSize: 20,
           width: 300,
           color: '#303030'
         },
         articleAuthor: {
           fontFamily: 'sans_medium',
           color: 'gray',
-          fontSize: 14,
+          fontSize: 13,
           paddingTop: 3,
         },
 })
