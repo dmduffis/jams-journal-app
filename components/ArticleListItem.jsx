@@ -17,7 +17,7 @@ const ArticleListItem = ({item}) => {
             <View>
               <Ionicons style={{paddingTop: 15}}
               name='chevron-forward-outline'
-              size={20}
+              size={12}
               color='gray'
               />
             </View>
@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
           fontFamily: 'sans_medium',
           color: 'gray',
           fontSize: 14,
-          paddingTop: 3,
+          marginTop: 3,
+          paddingBottom: 3,
         },
 })

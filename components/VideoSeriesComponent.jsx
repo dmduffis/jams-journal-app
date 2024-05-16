@@ -12,8 +12,9 @@ import { useNavigation } from '@react-navigation/native';
       <TouchableOpacity onPress={() => navigation.navigate ("Series Details", {item})}>
         <Image style={styles.featuredImg} source={{uri: item.coverPhoto.url}}/>
       <View style={styles.txtContainer}>
-        <Text style={styles.txtIssueTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.txtIssueNumber}>{item.event} | {item.year}</Text>
+        <Text style={styles.txtSeriesTitle} numberOfLines={1}>{item.title}</Text>
+        <Text style={styles.txtConferenceTitle}>{item.event} | {item.year}</Text>
+        <Text style={styles.txtVideoCount}>{item.videos.length} videos</Text>
       </View>
       </TouchableOpacity>
     </View>
@@ -29,8 +30,7 @@ const styles = StyleSheet.create({
         width: '100vw',
         marginBottom: 10,
         marginTop: 10,
-        borderRadius: 10,
-        paddingBottom: 10,
+        borderRadius: 5,
         borderWidth: 1,
         borderColor: '#D4D4D4',
         borderStyle: 'solid',
@@ -39,28 +39,34 @@ const styles = StyleSheet.create({
     featuredImg: {
         width: '100%',
         height: 200,
-        borderTopLeftRadius: 9,
-        borderTopRightRadius: 9,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4,
     },
     txtContainer: {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         margin: 10,
+        padding: 5,
     },
     txtCurrent: {
         fontFamily: 'sans_medium',
-        marginBottom: 5,
         fontSize: 15,
         color: '#868689',
     },
-    txtIssueNumber: {
+    txtConferenceTitle: {
         fontFamily: 'sans_medium',
-        marginTop: 5,
+        marginTop: 2,
         fontSize: 14,
         color: '#868689',
     },
-    txtIssueTitle: {
+    txtVideoCount: {
+      fontFamily: 'sans_medium',
+      marginTop: 10,
+      fontSize: 14,
+      color: '#868689',
+    },
+    txtSeriesTitle: {
         fontFamily: 'sans_semibold',
         fontSize: 18,
         color: 'black'
