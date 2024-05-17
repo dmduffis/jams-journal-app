@@ -45,15 +45,16 @@ export default IssuesRow
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 5,
         marginBottom: 20,
-        marginLeft: 20,
-        marginRight: 20,
+        marginLeft: 5,
+        backgroundColor: '#FFF',
+        padding: 20,
+        borderRadius: 20,
     },
     sectionTitle: {
         color: 'black',
         fontFamily: 'sans_semibold',
         fontSize: 20,
-        marginBottom: 10,
+        marginBottom: 20,
     }
 })
