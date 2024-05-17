@@ -8,7 +8,7 @@ import Header from '../components/Header'
 
 const Home = () => {
   return (
-    <ScrollView style = {{height: '100%'}}>
+    <ScrollView style = {{height: '100%', backgroundColor: '#FFF'}}>
     <Header />
     <FeatureHeader />
         <IssuesRow />
