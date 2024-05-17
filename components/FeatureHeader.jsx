@@ -86,11 +86,11 @@ const styles = StyleSheet.create({
     },
     txtContainer: {
         display: 'flex',
-        width: 230,
+        width: 220,
         flexDirection: 'column',
         justifyContent: 'center',
-        marginLeft: 20,
-        marginRight: 20,
+        marginLeft: 15,
+        marginRight: 15,
         paddingRight: 20,
     },
     txtCurrent: {
