@@ -35,22 +35,22 @@ const GET_CURRENT_ISSUE = gql`query {
         <Image style={styles.featuredImg} source={{uri: item.coverPhoto.url}}/>
         </TouchableOpacity>
       <View style={styles.txtContainer}>
-        <View style={styles.current}><Text style={styles.txtCurrent}>Vol {item.issue}</Text></View>
+        <View style={styles.current}><Text style={styles.txtCurrent}>Current Issue</Text></View>
         <Text style={styles.txtIssueTitle}>{item.title}</Text>
         <Text style={styles.txtIssueNumber}>Methods, case studies, and practical tips on the use of house churches in Adventist missions.</Text>
       
       <View style={styles.actionOptions}>
         <TouchableOpacity style={styles.readBtn} onPress={() => navigation.navigate ("Issue Details", {item})}>
           <Text style={styles.txtReadNow}>View Issue</Text>
-          <Text style={{marginLeft: 5}}><Ionicons name='arrow-forward-sharp' size={20} color='#4a8cb0'/></Text>
+          <Text style={{marginLeft: 5}}><Ionicons name='arrow-forward-sharp' size={20} color='#357db5'/></Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => {}}>
-          <Text style={{marginLeft: 20, marginTop: 15}}><Ionicons name='bookmark-outline' size={20} color='#4a8cb0'/></Text>
+          <Text style={{marginLeft: 20, marginTop: 15}}><Ionicons name='bookmark-outline' size={20} color='#357db5'/></Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => {}}>
-          <Text style={{marginLeft: 8, marginTop: 15}}><Ionicons name='share-outline' size={20} color='#4a8cb0'/></Text>
+          <Text style={{marginLeft: 8, marginTop: 15}}><Ionicons name='share-outline' size={20} color='#357db5'/></Text>
         </TouchableOpacity>
         
         </View>
@@ -63,26 +63,21 @@ export default FeatureHeader
 
 const styles = StyleSheet.create({
     container: {
-        position: 'absolute',
-        top: 110,
         display: 'flex',
         flexDirection: 'row',
         alignSelf: 'center',
         height: 'auto',
-        width: '93%',
+        width: '100%',
         marginBottom: 5,
-        marginTop: 10,
         marginLeft: 5,
         marginRight: 5,
         padding: 20,
         backgroundColor: '#fff',
         borderRadius: 20,
-        zIndex: 999,
     },
     featuredImg: {
-        width: 115,
-        height: 179,
-        borderRadius: 3,
+        width: 119,
+        height: 185,
     },
     txtContainer: {
         display: 'flex',
@@ -97,7 +92,7 @@ const styles = StyleSheet.create({
         fontFamily: 'sans_bold',
         textTransform: 'uppercase',
         fontSize: 13,
-        color: '#4a8cb0',
+        color: '#357db5',
 
     },
     txtIssueNumber: {
@@ -122,7 +117,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: 'black',
         textAlign: 'center',
-        color: '#4a8cb0',
+        color: '#357db5',
     },
     readBtn: {
       padding: 8,
@@ -133,7 +128,7 @@ const styles = StyleSheet.create({
       marginTop: 15,
       width: 125,
       borderRadius: 20,
-      borderColor: '#4a8cb0',
+      borderColor: '#357db5',
       borderWidth: 1,
       borderStyle: 'solid',
     }
