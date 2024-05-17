@@ -5,15 +5,19 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import AuthorsRow from '../components/AuthorsRow'
 import IssuesRow from '../components/IssuesRow'
 import Header from '../components/Header'
+import TopArticles from '../components/TopArticles'
 
 const Home = () => {
   return (
-    <ScrollView style = {{height: '100%'}}>
+    <View>
     <Header />
+    <ScrollView style = {{height: '100%'}}>
     <FeatureHeader />
+    <TopArticles />
         <IssuesRow />
         <AuthorsRow />
       </ScrollView>
+    </View>
   )
 }
 

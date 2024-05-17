@@ -23,13 +23,10 @@ const styles = StyleSheet.create({
     container: {
         display: 'flex',
         alignItems: 'center',
-        width: 95,
+        width: 'auto',
         height: 110,
         padding: 10,
-        borderRadius: 20,
-        borderStyle: 'solid',
-        borderColor: '#D4D4D4',
-        borderWidth: 1,
+        marginRight: 10,
     },
     photo: {
         width: 60,

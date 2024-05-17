@@ -38,7 +38,7 @@ if (error) return `Error! ${error}`;
     horizontal
     showsHorizontalScrollIndicator={false}
     removeClippedSubviews={true}
-    contentContainerStyle={{columnGap: 10 }}>
+    >
     </FlatList>
     </View>
   )
@@ -49,9 +49,9 @@ export default AuthorsRow
 const styles = StyleSheet.create({
     container: {
         marginTop: 5,
+        padding: 20,
         marginBottom: 20,
-        marginLeft: 20,
-        marginRight: 20,
+        backgroundColor: 'white',
     },
     sectionTitle: {
         color: 'black',

@@ -45,7 +45,6 @@ export default IssuesRow
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: 20,
         padding: 20,
         backgroundColor: 'white',
     },
