@@ -37,7 +37,7 @@ export default function BottomTabNavigation() {
                 return <Ionicons 
                 name={"home"}
                 size={24}
-                color={focused? 'blue': 'gray'} />
+                color={focused? '#016180': 'gray'} />
             }
             }}/>
 
@@ -49,7 +49,7 @@ export default function BottomTabNavigation() {
                 return <Ionicons 
                 name={"search-sharp"}
                 size={24}
-                color={focused? 'blue': 'gray'} />
+                color={focused? '#016180': 'gray'} />
             }
             }}/>
 
@@ -61,7 +61,7 @@ export default function BottomTabNavigation() {
                         return <MaterialIcons
                         name={"ondemand-video"} 
                         size={24}
-                        color={focused? 'blue': 'gray'} />
+                        color={focused? '#016180': 'gray'} />
                     }
                     }}/>
         
@@ -73,7 +73,7 @@ export default function BottomTabNavigation() {
                         return <Ionicons 
                         name={focused? "person" : "person-outline"} 
                         size={24}
-                        color={focused? 'blue': 'gray'} />
+                        color={focused? '#016180': 'gray'} />
                     }
                     }}/>
             
