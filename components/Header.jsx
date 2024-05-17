@@ -19,8 +19,8 @@ const styles = StyleSheet.create({
     },
     jams: {
         display: 'flex',
-        fontFamily: 'serif_regular',
-        fontSize: 22,
+        fontFamily: 'sans_regular',
+        fontSize: 24,
         color: 'white',
         textAlign: 'left',
         marginTop: 75,
