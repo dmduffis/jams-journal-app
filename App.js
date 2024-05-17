@@ -35,6 +35,9 @@ export default function App() {
     sans_semibold: require("./assets/fonts/IBMPlexSans-SemiBold.ttf"),
     sans_thin: require("./assets/fonts/IBMPlexSans-Thin.ttf"),
     sans_bold: require("./assets/fonts/IBMPlexSans-Bold.ttf"),
+    basker_italic: require("./assets/fonts/LibreBaskerville-Italic.ttf"),
+    basker_regular: require("./assets/fonts/LibreBaskerville-Regular.ttf"),
+    basker_bold: require("./assets/fonts/LibreBaskerville-Bold.ttf"),
   });
 
   useEffect(() => {

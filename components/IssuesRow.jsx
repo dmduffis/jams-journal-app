@@ -47,8 +47,7 @@ const styles = StyleSheet.create({
     container: {
         marginBottom: 20,
         padding: 20,
-        borderTopLeftRadius: 20,
-        borderBottomLeftRadius: 20,
+        backgroundColor: 'white',
     },
     sectionTitle: {
         color: 'black',

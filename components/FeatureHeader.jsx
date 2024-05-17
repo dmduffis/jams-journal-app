@@ -64,16 +64,15 @@ export default FeatureHeader
 const styles = StyleSheet.create({
     container: {
         display: 'flex',
+        width: '100vw',
         flexDirection: 'row',
         alignSelf: 'center',
         height: 'auto',
-        width: '100%',
         marginBottom: 5,
-        marginLeft: 5,
-        marginRight: 5,
+        marginLeft: 20,
+        marginRight: 20,
         padding: 20,
         backgroundColor: '#fff',
-        borderRadius: 20,
     },
     featuredImg: {
         width: 119,
@@ -81,12 +80,10 @@ const styles = StyleSheet.create({
     },
     txtContainer: {
         display: 'flex',
-        width: 220,
+        width: 215,
         flexDirection: 'column',
         justifyContent: 'center',
         marginLeft: 15,
-        marginRight: 15,
-        paddingRight: 20,
     },
     txtCurrent: {
         fontFamily: 'sans_bold',
@@ -98,7 +95,7 @@ const styles = StyleSheet.create({
     txtIssueNumber: {
         fontFamily: 'sans_medium',
         marginTop: 10,
-        fontSize: 13,
+        fontSize: 14,
         color: '#868689',
     },
     txtIssueTitle: {

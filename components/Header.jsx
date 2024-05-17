@@ -8,7 +8,7 @@ const Header = () => {
       <Text style={styles.jams}>jams</Text>
       <Ionicons 
       name = 'search-outline'
-      color= 'white'
+      color= 'black'
       size = {24}
       style = {{marginTop: 59}}
       />
@@ -28,12 +28,14 @@ const styles = StyleSheet.create({
         paddingRight: 20,
         paddingTop: 20,
         paddingBottom: 0,
-        backgroundColor: '#357db5'
+        borderBottomColor: 'lightgray',
+        borderBottomWidth: 0.5,
+        borderBottomStyle: 'solid',
     },
     jams: {
-        fontFamily: 'Times',
+        fontFamily: 'basker_bold',
         fontSize: 30,
-        color: 'white',
+        color: '#357db5',
         marginTop: 48,
     }
 })
