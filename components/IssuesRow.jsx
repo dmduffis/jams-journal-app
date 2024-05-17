@@ -25,7 +25,7 @@ if (error) return `Error! ${error}`;
 
   return (
     <View style={styles.container}>
-    <Text style={styles.sectionTitle}>Latest Journals</Text>
+    <Text style={styles.sectionTitle}>Recent Issues</Text>
     <FlatList
     data={data.journals.filter((item) => item.issue !== '1.1' && item.issue !== '19.2')}
     keyExtractor={item => item.id}
@@ -53,8 +53,8 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         color: 'black',
-        fontFamily: 'serif_regular',
-        fontSize: 20,
+        fontFamily: 'sans_regular',
+        fontSize: 24,
         marginBottom: 20,
     }
 })
