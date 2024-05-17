@@ -46,14 +46,14 @@ export default IssuesRow
 const styles = StyleSheet.create({
     container: {
         marginBottom: 20,
-        marginLeft: 5,
         backgroundColor: '#FFF',
         padding: 20,
-        borderRadius: 20,
+        borderTopLeftRadius: 20,
+        borderBottomLeftRadius: 20,
     },
     sectionTitle: {
         color: 'black',
-        fontFamily: 'sans_semibold',
+        fontFamily: 'serif_regular',
         fontSize: 20,
         marginBottom: 20,
     }
