@@ -54,7 +54,6 @@ export default VideoSeriesRow
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 5,
         marginBottom: 20,
         marginLeft: 10,
         marginRight: 10,

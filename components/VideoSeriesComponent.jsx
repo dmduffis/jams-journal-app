@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Image, Platform, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 
   const VideoSeriesComponent = ({item}) => {
@@ -14,7 +15,10 @@ import { useNavigation } from '@react-navigation/native';
       <View style={styles.txtContainer}>
         <Text style={styles.txtSeriesTitle} numberOfLines={1}>{item.title}</Text>
         <Text style={styles.txtConferenceTitle}>{item.event} | {item.year}</Text>
+        <View style={styles.videoQuantity}>
+        <Ionicons name='videocam' size={16} color='#357db5' />
         <Text style={styles.txtVideoCount}>{item.videos.length} videos</Text>
+        </View>
       </View>
       </TouchableOpacity>
     </View>
@@ -28,8 +32,8 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         width: '100vw',
-        marginBottom: 10,
-        marginTop: 10,
+        marginBottom: 5,
+        marginTop: 15,
         borderRadius: 20,
         borderWidth: 1,
         borderColor: '#D4D4D4',
@@ -60,16 +64,22 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#868689',
     },
-    txtVideoCount: {
-      fontFamily: 'sans_medium',
+    videoQuantity: {
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'center',
       marginTop: 10,
+    },
+    txtVideoCount: {
+      fontFamily: 'sans_bold',
       fontSize: 14,
-      color: '#868689',
+      color: '#357db5',
     },
     txtSeriesTitle: {
         fontFamily: 'sans_semibold',
         fontSize: 18,
-        color: 'black'
+        color: 'black',
     },
     txtReadNow: {
         marginTop: 15,

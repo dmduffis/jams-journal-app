@@ -6,7 +6,9 @@ import VideoSeriesRow from '../components/VideoSeriesRow'
 const Videos = () => {
   return (
     <SafeAreaView>
-      <Text style={styles.pageTitle}>Videos</Text>
+      <View style={styles.container}>
+        <Text style={styles.pageTitle}>Videos</Text>
+      </View>
       <VideoSeriesRow />
     </SafeAreaView>
   )
@@ -15,13 +17,18 @@ const Videos = () => {
 export default Videos
 
 const styles = StyleSheet.create({
-  pageTitle: {
-    fontFamily: 'sans_bold',
-    fontSize: 26,
-    marginBottom: 5,
-    color: '#357db5',
+  container: {
     paddingLeft: 20,
     paddingRight: 20,
     paddingTop: 20,
+    borderBottomColor: 'lightgray',
+    borderBottomWidth: 0.5,
+    borderBottomStyle: 'solid',
+  },
+  pageTitle: {
+    fontFamily: 'sans_bold',
+    fontSize: 26,
+    marginBottom: 10,
+    color: '#357db5',
 },
 })
