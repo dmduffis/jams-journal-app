@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
         borderBottomColor: 'lightgray',
         borderBottomWidth: 0.5,
         borderBottomStyle: 'solid',
+        backgroundColor: '#fff',
     },
     jams: {
         fontFamily: 'basker_bold',

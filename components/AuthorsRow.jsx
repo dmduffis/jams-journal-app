@@ -51,12 +51,11 @@ const styles = StyleSheet.create({
         marginTop: 5,
         padding: 20,
         marginBottom: 20,
-        backgroundColor: 'white',
     },
     sectionTitle: {
-        color: 'black',
-        fontFamily: 'sans_regular',
-        fontSize: 24,
-        marginBottom: 10,
+      fontFamily: 'sans_semibold',
+      fontSize: 22,
+      marginBottom: 5,
+      color: '#357db5',
     }
 })

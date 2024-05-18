@@ -47,11 +47,13 @@ const styles = StyleSheet.create({
     container: {
         padding: 20,
         backgroundColor: 'white',
+        borderTopLeftRadius: 30,
+        borderBottomLeftRadius: 30,
     },
     sectionTitle: {
-        color: 'black',
-        fontFamily: 'sans_regular',
-        fontSize: 24,
-        marginBottom: 20,
+      fontFamily: 'sans_semibold',
+      fontSize: 22,
+      marginBottom: 20,
+      color: '#357db5',
     }
 })

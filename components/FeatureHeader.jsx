@@ -42,7 +42,7 @@ const GET_CURRENT_ISSUE = gql`query {
       <View style={styles.actionOptions}>
         <TouchableOpacity style={styles.readBtn} onPress={() => navigation.navigate ("Issue Details", {item})}>
           <Text style={styles.txtReadNow}>View Issue</Text>
-          <Text style={{marginLeft: 5}}><Ionicons name='arrow-forward-sharp' size={20} color='#357db5'/></Text>
+          <Text style={{marginLeft: 5, marginTop: 3,}}><Ionicons name='arrow-forward-sharp' size={15} color='#357db5'/></Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => {}}>
@@ -64,13 +64,14 @@ export default FeatureHeader
 const styles = StyleSheet.create({
     container: {
         display: 'flex',
-        width: '100vw',
+        width: '100%',
         flexDirection: 'row',
         alignSelf: 'center',
         height: 'auto',
         marginBottom: 5,
         marginLeft: 20,
         marginRight: 20,
+        borderBottomLeftRadius: 30,
         padding: 20,
         backgroundColor: '#fff',
     },
@@ -80,7 +81,7 @@ const styles = StyleSheet.create({
     },
     txtContainer: {
         display: 'flex',
-        width: 215,
+        width: 210,
         flexDirection: 'column',
         justifyContent: 'center',
         marginLeft: 15,

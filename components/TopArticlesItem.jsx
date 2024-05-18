@@ -30,12 +30,9 @@ export default TopArticlesItem
 
 const styles = StyleSheet.create({
     articlesContainer: {
-        padding: 8,
+        padding: 6,
         display: 'flex',
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#FFF',
         marginBottom: 1,
         borderRadius: 5,
         },
@@ -55,12 +52,12 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 20
+        gap: 20,
     },
     articleIndex: {
         fontFamily: 'sans_bold',
-        fontSize: 25,
+        fontSize: 24,
         width: 'auto',
-        color: '#357db5'
+        color: '#357db5',
       }, 
 })

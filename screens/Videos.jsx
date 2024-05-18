@@ -6,6 +6,7 @@ import VideoSeriesRow from '../components/VideoSeriesRow'
 const Videos = () => {
   return (
     <SafeAreaView>
+      <Text style={styles.pageTitle}>Videos</Text>
       <VideoSeriesRow />
     </SafeAreaView>
   )
@@ -13,4 +14,14 @@ const Videos = () => {
 
 export default Videos
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  pageTitle: {
+    fontFamily: 'sans_bold',
+    fontSize: 26,
+    marginBottom: 5,
+    color: '#357db5',
+    paddingLeft: 20,
+    paddingRight: 20,
+    paddingTop: 20,
+},
+})

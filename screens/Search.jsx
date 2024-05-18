@@ -55,6 +55,7 @@ function Search() {
   return (
     <SafeAreaView style={{marginBottom: 100}}>
       <View>
+      <Text style={styles.pageTitle}>Explore</Text>
         <TextInput style={styles.input}
           onChangeText={setSearchInput}
           value={searchInput}
@@ -98,4 +99,13 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#FFF',
   },
+  pageTitle: {
+    fontFamily: 'sans_bold',
+    fontSize: 26,
+    marginBottom: 5,
+    color: '#357db5',
+    paddingLeft: 20,
+    paddingRight: 20,
+    paddingTop: 20,
+}
 });

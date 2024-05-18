@@ -11,7 +11,7 @@ const Home = () => {
   return (
     <View>
     <Header />
-    <ScrollView style = {{height: '100%'}}>
+    <ScrollView showsVerticalScrollIndicator={false} style = {{marginBottom: 170}}>
     <FeatureHeader />
     <TopArticles />
         <IssuesRow />

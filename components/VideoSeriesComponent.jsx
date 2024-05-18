@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
         width: '100vw',
         marginBottom: 10,
         marginTop: 10,
-        borderRadius: 5,
+        borderRadius: 20,
         borderWidth: 1,
         borderColor: '#D4D4D4',
         borderStyle: 'solid',
@@ -39,8 +39,8 @@ const styles = StyleSheet.create({
     featuredImg: {
         width: '100%',
         height: 200,
-        borderTopLeftRadius: 4,
-        borderTopRightRadius: 4,
+        borderTopLeftRadius: 19,
+        borderTopRightRadius: 19,
     },
     txtContainer: {
         display: 'flex',

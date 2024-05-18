@@ -52,12 +52,11 @@ const styles = StyleSheet.create({
     container: {
         padding: 20,
         marginBottom: 5,
-        backgroundColor: 'white',
     },
     sectionTitle: {
-        fontFamily: 'sans_bold',
-        textTransform: 'uppercase',
-        fontSize: 13,
+        fontFamily: 'sans_semibold',
+        fontSize: 22,
+        marginBottom: 5,
         color: '#357db5',
     }
 })
