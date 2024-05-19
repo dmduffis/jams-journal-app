@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react'
 import { useQuery, gql, useLazyQuery } from "@apollo/client";
 import { useState } from "react";
-import { Button, StyleSheet, View, Text, TextInput, FlatList } from 'react-native';
+import { Button, StyleSheet, View, Text, TextInput, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SearchListItem from '../components/SearchListItem';
+import { Keyboard } from 'react-native'
 
 const GET_ARTICLES = gql`
   query {
@@ -53,6 +54,7 @@ function Search() {
 
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <SafeAreaView style={{marginBottom: 100}}>
       <View>
       <Text style={styles.pageTitle}>Explore</Text>
@@ -77,8 +79,8 @@ function Search() {
         contentContainerStyle={{columnGap: 10 }}>
         </FlatList>
       </View>
-
     </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 

@@ -1,17 +1,22 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 
 const Header = () => {
+
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       <Text style={styles.jams}>jams</Text>
-      <Ionicons 
+      <TouchableOpacity onPress={() => {navigation.navigate('Search')}}><Ionicons 
       name = 'search-outline'
       color= 'black'
       size = {24}
       style = {{marginTop: 59}}
       />
+      </TouchableOpacity>
     </View>
   )
 }
