@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
         <Text style={styles.txtSeriesTitle} numberOfLines={1}>{item.title}</Text>
         <Text style={styles.txtConferenceTitle}>{item.event} | {item.year}</Text>
         <View style={styles.videoQuantity}>
-        <Ionicons name='videocam' size={16} color='#357db5' />
+        <Ionicons style={{marginTop: 1}}name='videocam' size={16} color='#357db5' />
         <Text style={styles.txtVideoCount}>{item.videos.length} videos</Text>
         </View>
       </View>
