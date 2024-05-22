@@ -46,12 +46,17 @@ function Search() {
   if (loading) return <View><Text>Loading</Text></View>;
   if (error) return <View><Text>Bad Error</Text></View>;
 
+
   const getSearchResults = () => {
-    const results = data.articles.filter((article) => article.content.text.includes(searchInput) || article.title.includes(searchInput))
+    const results = data.articles.filter((article) => 
+      article.content.text.toLowerCase().includes(searchInput.toLowerCase()) 
+      || article.title.toLowerCase().includes(searchInput.toLowerCase())
+      || article.authors[0].name.toLowerCase().includes(searchInput.toLowerCase())
+      )
+       
     results.length !== 0 ? setArticleData(results) : setArticleData(noData)
     results.length !== 0 ? setDataExists(true) : setDataExists(false);
   }
-
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
