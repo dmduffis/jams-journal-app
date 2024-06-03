@@ -5,8 +5,8 @@ import ArticleComponent from '../components/ArticleComponent';
 import { useQuery, gql } from '@apollo/client';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-// import { useContext } from 'react';
-// import { GlobalContext } from '../context/GlobalContext';
+import { useContext, useState, useEffect} from 'react';
+import { AuthorContext } from '../context/AuthorContext';
 
 
 const GET_AUTHOR_RESOURCES = gql`{
@@ -43,10 +43,31 @@ const GET_AUTHOR_RESOURCES = gql`{
 export default AuthorDetails = ({navigation}) => {
 
 
-  // const { followedAuthors, following, updateFollowing } = useContext(GlobalContext);
-
   const route = useRoute({navigation});
+  
   const { item } = route.params;
+
+  const {followedAuthors, setFollowedAuthors} = useContext(AuthorContext);
+
+  const deleteAuthor = () => {
+    let newAuthorList = followedAuthors.filter((id) => {
+        return id !== item.id
+      })
+    setFollowedAuthors(newAuthorList);
+  }
+
+  const addAuthor = () => {
+    setFollowedAuthors(prevAuthors => [...prevAuthors, item.id])
+  }
+
+  const handleFollow = () => {
+    if (followedAuthors.includes(item.id)) {
+      deleteAuthor();
+    } else {
+      addAuthor();
+    }
+  }
+
 
   const { loading, error, data } = useQuery(GET_AUTHOR_RESOURCES)
 
@@ -57,8 +78,6 @@ export default AuthorDetails = ({navigation}) => {
 
   const articles = issueData[0].articles
 
-  // console.log(issueData[0].articles)
-
     return (
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
         
@@ -67,45 +86,16 @@ export default AuthorDetails = ({navigation}) => {
         <View style={styles.issueTitleContainer}>
         <Text style={styles.issueTitle}>{item.name}</Text>
         </View>
-        {/* <TouchableOpacity 
-      onPress = {() => updateFollowing(item.id)}
-      style={followedAuthors.includes(item.id) ? 
-        { 
-        display: 'flex',
-        flexDirection: 'row',
-        backgroundColor: 'white',
-        paddingRight: 10,
-        paddingLeft: 10,
-        paddingTop: 2,
-        paddingBottom: 2,
-        margin: 5,
-        width: 'auto',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: '#007caf' } 
-      : {
-        display: 'flex',
-        flexDirection: 'row',
-        backgroundColor: '#007caf',
-        paddingRight: 10,
-        paddingLeft: 10,
-        paddingTop: 3,
-        paddingBottom: 3,
-        margin: 5,
-        width: 'auto',
-        alignSelf: 'center',
-        justifyContent: 'center',
-        borderRadius: 15,}}>
-      
+        <TouchableOpacity 
+      onPress = {() => handleFollow()}
+      style={followedAuthors.includes(item.id) ? styles.followedBtn : styles.followBtn}>
       <View style={styles.follow}>
         <Text style={{fontFamily: 'sans_bold',
-      fontSize: 15, color: followedAuthors.includes(item.id) ? '#007caf' : 'white'}}>{ followedAuthors.includes(item.id) ? 'Following' : 'Follow' }
+      fontSize: 15, color: followedAuthors.includes(item.id)? '#007caf' : 'white'}}>{ followedAuthors.includes(item.id)? 'Following' : 'Follow' }
       </Text>
       </View>
 
-      </TouchableOpacity> */}
+      </TouchableOpacity>
         </View>
 
         <View style={styles.detailsContainter}>
@@ -194,4 +184,32 @@ const styles = StyleSheet.create({
       fontSize: 14,
       paddingTop: 3,
     },
+    followedBtn: { 
+      display: 'flex',
+      flexDirection: 'row',
+      backgroundColor: 'white',
+      paddingRight: 10,
+      paddingLeft: 10,
+      paddingTop: 2,
+      paddingBottom: 2,
+      margin: 5,
+      width: 'auto',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: '#007caf' },
+    followBtn: {
+        display: 'flex',
+        flexDirection: 'row',
+        backgroundColor: '#007caf',
+        paddingRight: 10,
+        paddingLeft: 10,
+        paddingTop: 3,
+        paddingBottom: 3,
+        margin: 5,
+        width: 'auto',
+        alignSelf: 'center',
+        justifyContent: 'center',
+        borderRadius: 15,}
 })

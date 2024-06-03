@@ -3,6 +3,13 @@ import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { useContext } from 'react'
 import { AuthorContext } from '../context/AuthorContext'
+import { loadErrorMessages, loadDevMessages } from "@apollo/client/dev";
+
+if (__DEV__) {
+  // Adds messages only in a dev environment
+  loadDevMessages();
+  loadErrorMessages();
+}
 
 const Author = ({item}) => {
 
@@ -11,16 +18,6 @@ const Author = ({item}) => {
   const {followedAuthors, setFollowedAuthors} = useContext(AuthorContext);
 
   const[followed, setFollowed] = useState(false);
-
-  const checkFollowedAuthors = () => {
-    followedAuthors.map((author) => {
-      if (author.id === item.id) {
-        setFollowed(true);
-      } else {
-        setFollowed(false);
-      }
-    })
-  }
 
   const deleteAuthor = () => {
     let newAuthorList = followedAuthors.filter((id) => {
@@ -34,18 +31,13 @@ const Author = ({item}) => {
   }
 
   const handleFollow = () => {
-    if (followed === true) {
+    if (followedAuthors.includes(item.id)) {
       deleteAuthor();
-      setFollowed(false)
     } else {
       addAuthor();
-      setFollowed(true)
     }
   }
 
-  useEffect(() => {
-    checkFollowedAuthors();
-  }, [])
 
 
 
@@ -56,8 +48,8 @@ const Author = ({item}) => {
           <Text style={styles.firstName}>{item.firstName}</Text>
           <Text style={styles.lastName}>{item.lastName}</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.followBtn} onPress={() => {handleFollow()}}>
-          <Text style={styles.followTxt}>{followed ? 'Following' : 'Follow'}</Text>
+      <TouchableOpacity style={followedAuthors.includes(item.id) ? styles.followedBtn : styles.followBtn} onPress={() => {handleFollow()}}>
+          <Text style={followedAuthors.includes(item.id) ? styles.followedTxt : styles.followTxt}>{followedAuthors.includes(item.id) ? 'Following' : 'Follow'}</Text>
       </TouchableOpacity>
     </View>
   )
@@ -94,13 +86,30 @@ const styles = StyleSheet.create({
       paddingTop: 4,
       paddingBottom: 4,
       width: '100%',
-      borderColor: 'blue',
+      borderColor: '#5a87b7',
+      backgroundColor: '#5a87b7',
       borderWidth: 1,
       borderRadius:12,
   },
+  followedBtn: {
+    marginTop: 7,
+    paddingTop: 4,
+    paddingBottom: 4,
+    width: '100%',
+    borderColor: '#5a87b7',
+    borderWidth: 1,
+    borderRadius:12,
+},
     followTxt: {
       fontFamily: 'sans_medium',
       fontSize: 10.5,
-      textAlign: 'center'
-  }
+      textAlign: 'center',
+      color: 'white'
+  },
+  followedTxt: {
+    fontFamily: 'sans_medium',
+    fontSize: 10.5,
+    textAlign: 'center',
+    color: '#5a87b7',
+}
 })

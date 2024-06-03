@@ -34,7 +34,6 @@ const GET_ISSUE_DETAILS = gql`{
   }
 `
 
-
 export default IssueDetails = ({navigation}) => {
 
 
@@ -51,8 +50,6 @@ export default IssueDetails = ({navigation}) => {
   const issueData = data.journals.filter((journal) => journal.id === item.id)
 
   const articles = issueData[0].articles
-
-  // console.log(issueData[0].articles)
 
     return (
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
