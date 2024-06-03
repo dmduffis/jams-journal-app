@@ -37,7 +37,7 @@ const GET_CURRENT_ISSUE = gql`query {
       <View style={styles.txtContainer}>
         <View style={styles.current}><Text style={styles.txtCurrent}>Current Issue</Text></View>
         <Text style={styles.txtIssueTitle}>{item.title}</Text>
-        <Text style={styles.txtIssueNumber}>Methods, case studies, and practical tips on the use of house churches in Adventist missions.</Text>
+        <Text style={styles.txtIssueNumber}>Methods, case studies, and practical tips on contextualizing beliefs and faith.</Text>
       
       <View style={styles.actionOptions}>
         <TouchableOpacity style={styles.readBtn} onPress={() => navigation.navigate ("Issue Details", {item})}>

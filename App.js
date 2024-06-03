@@ -14,6 +14,7 @@ import { useCallback, useEffect } from 'react';
 import IssueDetails from './screens/IssueDetails';
 import Videos from './components/VideoSeriesComponent';
 import SeriesDetails from './screens/SeriesDetails';
+import { AuthorProvider } from './context/AuthorContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -58,6 +59,7 @@ export default function App() {
   }
 
   return (
+    <AuthorProvider>
     <ApolloProvider client={client}>
       <NavigationContainer
       onReady={onLayoutRootView}>
@@ -103,6 +105,7 @@ export default function App() {
     </Stack.Navigator>
     </NavigationContainer>
     </ApolloProvider>
+    </AuthorProvider>
   );
 }
 
