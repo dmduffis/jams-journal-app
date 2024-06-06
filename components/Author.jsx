@@ -61,8 +61,9 @@ export default Author
 const styles = StyleSheet.create({
     container: {
       alignItems: 'center',
-        width: 100,
-        padding: 15,
+        width: 90,
+        paddingRight: 15,
+        paddingTop:10,
   },
     photo: {
         width: 60,
