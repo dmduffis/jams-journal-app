@@ -1,0 +1,3 @@
+{
+  "ignore_dirs": ["ios/Pods","ios/build","android/build",".expo",".git"]
+}
