@@ -1,27 +1,26 @@
-import {View, StyleSheet} from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { ApolloProvider } from '@apollo/client';
-import client from './services/ApolloClientSetup';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import BottomTabNavigation from './navigation/BottomTabNavigation';
-import { useFonts } from 'expo-font';
-import * as Font from 'expo-font'
-import Home from './screens/Home';
-import AuthorDetails from './screens/AuthorDetails';
-import Article from './screens/Article';
-import * as SplashScreen from 'expo-splash-screen';
-import { useCallback, useEffect } from 'react';
-import IssueDetails from './screens/IssueDetails';
-import Videos from './components/VideoSeriesComponent';
-import SeriesDetails from './screens/SeriesDetails';
-import { AuthorProvider } from './context/AuthorContext';
+import { View, StyleSheet } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { ApolloProvider } from "@apollo/client";
+import client from "./services/ApolloClientSetup";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import BottomTabNavigation from "./navigation/BottomTabNavigation";
+import { useFonts } from "expo-font";
+import * as Font from "expo-font";
+import Home from "./screens/Home";
+import AuthorDetails from "./screens/AuthorDetails.jsx";
+import Article from "./screens/Article";
+import * as SplashScreen from "expo-splash-screen";
+import { useCallback, useEffect } from "react";
+import IssueDetails from "./screens/IssueDetails.jsx";
+import Videos from "./components/VideoSeriesComponent";
+import SeriesDetails from "./screens/SeriesDetails.jsx";
+import { AuthorProvider } from "./context/AuthorContext";
 
 SplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-
   const [fontsLoaded] = useFonts({
     serif_light: require("./assets/fonts/IBMPlexSerif-Light.ttf"),
     serif_medium: require("./assets/fonts/IBMPlexSerif-Medium.ttf"),
@@ -60,59 +59,54 @@ export default function App() {
 
   return (
     <AuthorProvider>
-    <ApolloProvider client={client}>
-      <NavigationContainer
-      onReady={onLayoutRootView}>
-      <Stack.Navigator>
-      
-      <Stack.Screen 
-            name="Main"
-            component={BottomTabNavigation}
-            options={{headerShown:false}}
+      <ApolloProvider client={client}>
+        <NavigationContainer onReady={onLayoutRootView}>
+          <Stack.Navigator>
+            <Stack.Screen
+              name="Main"
+              component={BottomTabNavigation}
+              options={{ headerShown: false }}
             />
 
-      <Stack.Screen 
-            name="Author Details"
-            component={AuthorDetails}
-            options={{headerShown:false}}
+            <Stack.Screen
+              name="Author Details"
+              component={AuthorDetails}
+              options={{ headerShown: false }}
             />
 
-      <Stack.Screen 
-            name="Article"
-            component={Article}
-            options={{headerShown:false}}
+            <Stack.Screen
+              name="Article"
+              component={Article}
+              options={{ headerShown: false }}
             />
 
-      <Stack.Screen 
-            name="Issue Details"
-            component= {IssueDetails}
-            options={{headerShown:false}}
+            <Stack.Screen
+              name="Issue Details"
+              component={IssueDetails}
+              options={{ headerShown: false }}
             />
 
-      <Stack.Screen 
-            name="Videos"
-            component= {Videos}
-            options={{headerShown:false}}
-            />
-      
-      <Stack.Screen 
-            name="Series Details"
-            component= {SeriesDetails}
-            options={{headerShown:false}}
+            <Stack.Screen
+              name="Videos"
+              component={Videos}
+              options={{ headerShown: false }}
             />
 
-
-    </Stack.Navigator>
-    </NavigationContainer>
-    </ApolloProvider>
+            <Stack.Screen
+              name="Series Details"
+              component={SeriesDetails}
+              options={{ headerShown: false }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ApolloProvider>
     </AuthorProvider>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
 });

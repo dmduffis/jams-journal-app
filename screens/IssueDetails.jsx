@@ -34,7 +34,7 @@ const GET_ISSUE_DETAILS = gql`{
   }
 `
 
-export default IssueDetails = ({navigation}) => {
+const IssueDetails = ({navigation}) => {
 
 
   // const { followedAuthors, following, updateFollowing } = useContext(GlobalContext);
@@ -74,6 +74,8 @@ export default IssueDetails = ({navigation}) => {
       </ScrollView>
     )
 }
+
+export default IssueDetails
 
 const styles = StyleSheet.create({
   container: {

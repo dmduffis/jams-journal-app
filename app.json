@@ -16,7 +16,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dmduffis.jams-journal-app"
+      "bundleIdentifier": "com.dmduffis.jams-journal-app",
+      "deploymentTarget": "15.0"
     },
     "android": {
       "adaptiveIcon": {

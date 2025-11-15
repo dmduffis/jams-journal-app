@@ -40,7 +40,7 @@ const GET_AUTHOR_RESOURCES = gql`{
 `
 
 
-export default AuthorDetails = ({navigation}) => {
+const AuthorDetails = ({navigation}) => {
 
 
   const route = useRoute({navigation});
@@ -124,6 +124,8 @@ export default AuthorDetails = ({navigation}) => {
       </ScrollView>
     )
 }
+
+export default AuthorDetails
 
 const styles = StyleSheet.create({
   container: {

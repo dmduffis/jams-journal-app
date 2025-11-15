@@ -28,7 +28,7 @@ const GET_SERIES_DETAILS = gql`{
 `
 
 
-export default SeriesDetails = ({navigation}) => {
+const SeriesDetails = ({navigation}) => {
 
 const route = useRoute({navigation});
 const { item } = route.params;
@@ -80,6 +80,8 @@ const [videoID, setVideoID] = useState(videos[0].youtubeId);
       </SafeAreaView>
     )
 }
+
+export default SeriesDetails
 
 const styles = StyleSheet.create({
   container: {
