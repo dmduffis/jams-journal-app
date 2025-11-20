@@ -3,13 +3,6 @@ import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { useContext } from 'react'
 import { AuthorContext } from '../context/AuthorContext'
-import { loadErrorMessages, loadDevMessages } from "@apollo/client/dev";
-
-if (__DEV__) {
-  // Adds messages only in a dev environment
-  loadDevMessages();
-  loadErrorMessages();
-}
 
 const Author = ({item}) => {
 
@@ -44,7 +37,7 @@ const Author = ({item}) => {
   return (
       <View style={styles.container}>
         <TouchableOpacity onPress={() => navigation.navigate('Author Details', {item})}>
-          <Image style={styles.photo} source={{uri: item.photo.url}}/>
+          <Image style={styles.photo} source={{uri: item.avatar}}/>
           <Text style={styles.firstName}>{item.firstName}</Text>
           <Text style={styles.lastName}>{item.lastName}</Text>
       </TouchableOpacity>
