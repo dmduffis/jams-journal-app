@@ -1,36 +1,31 @@
 import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Author from './Author';
-import { useQuery, gql } from '@apollo/client';
-
-const GET_AUTHORS = gql`query {
-    authors {
-      name
-      firstName
-      lastName
-      featured
-      photo {
-        url
-      }
-      id
-    }
-  }
-`
 
 const AuthorsRow = () => {
 
-const { loading, error, data } = useQuery(GET_AUTHORS) 
+const [authorData, setAuthorData] = useState([]);
 
-if (loading) return null;
-if (error) return `Error! ${error}`;
+const getAuthorData = async () => {
+  try {
+    const response = await fetch('https://jams-journal-backend.up.railway.app/authors');
+    const data = await response.json();
+    const featuredAuthors = data.filter(author => author.featured === true);
+    setAuthorData(featuredAuthors);
+  } catch (error) {
+    console.error('Error fetching author data:', error);
+  }
+}
 
-
+useEffect(() => {
+  getAuthorData();
+}, []);
 
   return (
     <View style={styles.container}>
     <Text style={styles.sectionTitle}>Featured Authors</Text>
     <FlatList
-    data={data.authors.filter((item) => item.featured === true)}
+    data={authorData}
     keyExtractor={item => item.id}
     renderItem={({item}) => 
         (<Author item={item} key={item.id}/>) 
