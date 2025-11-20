@@ -1,62 +1,56 @@
-import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import TopArticlesItem from './TopArticlesItem';
-import { useQuery, gql } from '@apollo/client';
-
-const GET_ARTICLES = gql`
-  query {
-    articles {
-      content {
-        text
-        markdown
-      }
-      title
-      id
-      authors {
-        id
-        name
-        photo {
-            url
-        }
-      }
-    }
-  }
-`;
-
+import { FlatList, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import TopArticlesItem from "./TopArticlesItem";
 
 const TopArticles = () => {
+  const [articleData, setArticleData] = useState([]);
 
-const { loading, error, data } = useQuery(GET_ARTICLES) 
+  const getArticleData = async () => {
+    try {
+      const response = await fetch(
+        "https://jams-journal-backend.up.railway.app/articles"
+      );
+      const data = await response.json();
+      const featuredArticles = data.filter(
+        (article) => article.featured === true
+      );
+      setArticleData(featuredArticles);
+    } catch (error) {
+      console.error("Error fetching article data:", error);
+    }
+  };
 
-if (loading) return null;
-if (error) return `Error! ${error}`;
-
-const articleData = data.articles
+  useEffect(() => {
+    getArticleData();
+  }, []);
 
   return (
     <View style={styles.container}>
-    <Text style={styles.sectionTitle}>Popular Articles</Text>
-    <View>
-    {articleData.slice(0, 5).map((item, idx) => {
-        return <TopArticlesItem key={item.id} item={item} idx={idx}/>
-    })
-    }
-  </View>
-  </View>
-  )
-}
+      <Text style={styles.sectionTitle}>Popular Articles</Text>
+      <View>
+        {articleData.length > 0 ? (
+          articleData.slice(0, 5).map((item, idx) => {
+            return <TopArticlesItem key={item.id} item={item} idx={idx} />;
+          })
+        ) : (
+          <Text>Come back later for the latest articles</Text>
+        )}
+      </View>
+    </View>
+  );
+};
 
-export default TopArticles
+export default TopArticles;
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 20,
-        marginBottom: 5,
-    },
-    sectionTitle: {
-        fontFamily: 'sans_semibold',
-        fontSize: 22,
-        marginBottom: 5,
-        color: '#357db5',
-    }
-})
+  container: {
+    padding: 20,
+    marginBottom: 5,
+  },
+  sectionTitle: {
+    fontFamily: "sans_semibold",
+    fontSize: 22,
+    marginBottom: 5,
+    color: "#357db5",
+  },
+});
