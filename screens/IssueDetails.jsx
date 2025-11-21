@@ -55,7 +55,7 @@ const IssueDetails = ({navigation}) => {
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
         
         <View>
-        <Image style={styles.coverImg} source={{uri: item.coverPhoto.url}} />
+        <Image style={styles.coverImg} source={{uri: item.coverPhoto || 'https://via.placeholder.com/400x600'}} />
         <View style={styles.issueTitleContainer}>
         <Text style={styles.issueTitle}>{item.title}</Text>
         <Text style={styles.issueDetails}>Volume {item.issue}</Text>

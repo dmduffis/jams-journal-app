@@ -9,9 +9,9 @@ const Issue = ({item}) => {
   return (
     <TouchableOpacity onPress={() => navigation.navigate ("Issue Details", {item})}>
     <View style={styles.container}>
-    <Image style={styles.coverImg} source={{uri: item.coverPhoto.url}}/>
+    <Image style={styles.coverImg} source={{uri: item.coverPhoto || 'https://via.placeholder.com/145x220'}}/>
       <Text style={styles.titleIssue} numberOfLines={1} ellipsizeMode='tail'>{item.title}</Text>
-      <Text style={styles.dateIssue}>Vol. {item.issue} ({item.year})</Text>
+      <Text style={styles.dateIssue}>Vol. {item.issueNumber} ({item.year})</Text>
     </View>
     </TouchableOpacity>
   )
