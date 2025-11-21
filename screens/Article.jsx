@@ -30,11 +30,28 @@ const Article = () => {
 
   if (!articleData) return null;
 
-  return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.container} >
+  // Convert superscript notation to unicode superscript characters
+  const formatContent = (content) => {
+    if (!content) return '';
+    const superscriptMap = {
+      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+      '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+    };
+    // Convert ^1^ or [^1] to unicode superscript
+    return content
+      .replace(/\^\^?(\d+)\^\^?/g, (match, num) => 
+        num.split('').map(d => superscriptMap[d] || d).join('')
+      )
+      .replace(/\[\^(\d+)\]/g, (match, num) => 
+        num.split('').map(d => superscriptMap[d] || d).join('')
+      );
+  };
+
+return (
+  <ScrollView showsVerticalScrollIndicator={false} style={styles.container} >
       <Text style={styles.title}>{articleData.title}</Text>
-      
-      <View>
+    
+    <View>
         {/* Handle multiple authors */}
         {articleData.authors && articleData.authors.length > 0 && 
           articleData.authors.map((author) => (
@@ -45,10 +62,10 @@ const Article = () => {
         {!articleData.authors && articleData.author && (
           <ArticleAuthors author={articleData.author} />
         )}
-      </View>
+    </View>
 
       <View>
-        <Markdown selectable style={styles}>{articleData.content || ''}</Markdown>
+        <Markdown selectable style={styles}>{formatContent(articleData.content)}</Markdown>
       </View>
     </ScrollView>
   )
