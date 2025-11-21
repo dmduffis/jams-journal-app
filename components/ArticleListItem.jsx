@@ -12,7 +12,20 @@ const ArticleListItem = ({item}) => {
             <View style={styles.articlesContainer}>
             <View style={styles.articleInfo}>
             <Text style={styles.articleTitle}>{item.title}</Text>
-            {item.authors.map((author) => <Text key={author.id} style={styles.articleAuthor}>{author.name}</Text>)}
+            {/* Handle multiple authors */}
+            {item.authors && item.authors.length > 0 && 
+              item.authors.map((author) => (
+                <Text key={author.id} style={styles.articleAuthor}>
+                  {author.firstName} {author.lastName}
+                </Text>
+              ))
+            }
+            {/* Handle single author */}
+            {!item.authors && item.author && (
+              <Text style={styles.articleAuthor}>
+                {item.author.firstName} {item.author.lastName}
+              </Text>
+            )}
             </View>
             <View>
               <Ionicons style={{paddingTop: 15}}
