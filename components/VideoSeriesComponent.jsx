@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.navigate ("Series Details", {item})}>
-        <Image style={styles.featuredImg} source={{uri: item.coverPhoto.url}}/>
+        <Image style={styles.featuredImg} source={{uri: item.coverPhoto || 'https://via.placeholder.com/400x200'}}/>
       <View style={styles.txtContainer}>
         <Text style={styles.txtSeriesTitle} numberOfLines={1}>{item.title}</Text>
         <Text style={styles.txtConferenceTitle}>{item.event} | {item.year}</Text>

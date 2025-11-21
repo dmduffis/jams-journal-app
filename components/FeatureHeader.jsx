@@ -1,43 +1,46 @@
 import { View, Text, StyleSheet, Image, Platform, TouchableOpacity } from 'react-native'
-import React from 'react'
-import { useQuery, gql } from '@apollo/client';
+import React, { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
-const GET_CURRENT_ISSUE = gql`query {
-  journals {
-    coverPhoto {
-      url
-    }
-    id
-    issue
-    title
-    year
-  }
-}
-`
-
-
-  const FeatureHeader = () => {
-
+const FeatureHeader = () => {
+  const [currentIssue, setCurrentIssue] = useState(null);
   const navigation = useNavigation();
 
-  const { loading, error, data } = useQuery(GET_CURRENT_ISSUE) 
+  const getCurrentIssue = async () => {
+    try {
+      const response = await fetch(
+        "https://jams-journal-backend.up.railway.app/journals"
+      );
+      const data = await response.json();
+      
+      if (data && Array.isArray(data)) {
+        // Sort by issueNumber descending to get the latest issue
+        const sortedJournals = [...data].sort((a, b) => b.issueNumber - a.issueNumber);
+        setCurrentIssue(sortedJournals[0]);
+      }
+    } catch (error) {
+      console.error("Error fetching current issue:", error);
+    }
+  };
 
-  if (loading) return null;
-  if (error) return `Error! ${error}`;
+  useEffect(() => {
+    getCurrentIssue();
+  }, []);
 
-  const item = data.journals[1]
+  if (!currentIssue) return null;
+
+  const item = currentIssue
 
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.navigate ("Issue Details", {item})}>
-        <Image style={styles.featuredImg} source={{uri: item.coverPhoto.url}}/>
+        <Image style={styles.featuredImg} source={{uri: item.coverPhoto || 'https://via.placeholder.com/119x185'}}/>
         </TouchableOpacity>
       <View style={styles.txtContainer}>
         <View style={styles.current}><Text style={styles.txtCurrent}>Current Issue</Text></View>
         <Text style={styles.txtIssueTitle}>{item.title}</Text>
-        <Text style={styles.txtIssueNumber}>Methods, case studies, and practical tips on contextualizing beliefs and faith.</Text>
+        {item.subtitle && <Text style={styles.txtIssueNumber}>{item.subtitle}</Text>}
       
       <View style={styles.actionOptions}>
         <TouchableOpacity style={styles.readBtn} onPress={() => navigation.navigate ("Issue Details", {item})}>

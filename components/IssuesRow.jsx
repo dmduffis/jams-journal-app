@@ -1,33 +1,38 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Issue from './Issue';
-import { useQuery, gql } from '@apollo/client';
-
-const GET_JOURNALS = gql`query {
-    journals {
-      coverPhoto {
-        url
-      }
-      id
-      issue
-      title
-      year
-    }
-  }
-  `
 
 const IssuesRow = () => {
+  const [issueData, setIssueData] = useState([]);
 
-const { loading, error, data } = useQuery(GET_JOURNALS) 
+  const getIssueData = async () => {
+    try {
+      const response = await fetch(
+        "https://jams-journal-backend.up.railway.app/journals"
+      );
+      const data = await response.json();
+      
+      if (data && Array.isArray(data)) {
+        const issuesWithoutFirst = data.slice(1, 7);
+        setIssueData(issuesWithoutFirst);
+      } else {
+        setIssueData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching journal data:", error);
+      setIssueData([]);
+    }
+  };
 
-if (loading) return null;
-if (error) return `Error! ${error}`;
+  useEffect(() => {
+    getIssueData();
+  }, []);
 
   return (
     <View style={styles.container}>
     <Text style={styles.sectionTitle}>Recent Issues</Text>
     <FlatList
-    data={data.journals.filter((item) => item.issue !== '1.1' && item.issue !== '19.2')}
+    data={issueData}
     keyExtractor={item => item.id}
     renderItem={({item}) => 
         (<Issue item = {item} key={item.id}/>) 

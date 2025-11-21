@@ -82,9 +82,9 @@ const AuthorDetails = ({navigation}) => {
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
         
         <View>
-        <Image style={styles.coverImg} source={{uri: item.photo.url}} />
+        <Image style={styles.coverImg} source={{uri: item.avatar || 'https://via.placeholder.com/400x400'}} />
         <View style={styles.issueTitleContainer}>
-        <Text style={styles.issueTitle}>{item.name}</Text>
+        <Text style={styles.issueTitle}>{item.firstName} {item.lastName}</Text>
         </View>
         <TouchableOpacity 
       onPress = {() => handleFollow()}
