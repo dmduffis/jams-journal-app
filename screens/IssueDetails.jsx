@@ -1,55 +1,35 @@
 import { Text, StyleSheet, View, FlatList, SafeAreaView, TouchableOpacity, Image, ScrollView} from 'react-native'
-import React, { Component } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRoute } from '@react-navigation/native'
-import { useQuery, gql } from '@apollo/client';
 import ArticleListItem from '../components/ArticleListItem';
-// import { useContext } from 'react';
-// import { GlobalContext } from '../context/GlobalContext';
-
-
-const GET_ISSUE_DETAILS = gql`{
-    journals {
-      coverPhoto {
-        url
-      }
-      id
-      issue
-      title
-      year
-      articles {
-        authors {
-          id
-          name
-          photo {
-            url
-          }
-        }
-        title
-        id
-        content {
-          markdown
-        }
-      }
-    }
-  }
-`
 
 const IssueDetails = ({navigation}) => {
-
-
-  // const { followedAuthors, following, updateFollowing } = useContext(GlobalContext);
-
+  const [issueData, setIssueData] = useState(null);
   const route = useRoute({navigation});
   const { item } = route.params;
 
-  const { loading, error, data } = useQuery(GET_ISSUE_DETAILS)
+  const getIssueDetails = async () => {
+    try {
+      const response = await fetch(
+        `https://jams-journal-backend.up.railway.app/journals/${item.id}`
+      );
+      const data = await response.json();
+      
+      if (data) {
+        setIssueData(data);
+      }
+    } catch (error) {
+      console.error("Error fetching issue details:", error);
+    }
+  };
 
-  if (loading) return null;
-  if (error) return `Error! ${error}`;
+  useEffect(() => {
+    getIssueDetails();
+  }, [item.id]);
 
-  const issueData = data.journals.filter((journal) => journal.id === item.id)
+  if (!issueData) return null;
 
-  const articles = issueData[0].articles
+  const articles = issueData.articles || []
 
     return (
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
@@ -58,17 +38,24 @@ const IssueDetails = ({navigation}) => {
         <Image style={styles.coverImg} source={{uri: item.coverPhoto || 'https://via.placeholder.com/400x600'}} />
         <View style={styles.issueTitleContainer}>
         <Text style={styles.issueTitle}>{item.title}</Text>
-        <Text style={styles.issueDetails}>Volume {item.issue}</Text>
+        <Text style={styles.issueDetails}>Volume {item.issueNumber}</Text>
         </View>
         </View>
 
         <View style={styles.detailsContainter}>
         <View>
-        {articles.map((item) => {
-          return (
-          <ArticleListItem item={item} key={item.id} />
-        ) 
-        })}
+        {articles.length > 0 ? (
+          articles.map((item) => {
+            return (
+            <ArticleListItem item={item} key={item.id} />
+          ) 
+          })
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No articles available yet.</Text>
+            <Text style={styles.emptySubtext}>Check back soon for new content!</Text>
+          </View>
+        )}
     </View>
     </View>
       </ScrollView>
@@ -148,5 +135,24 @@ const styles = StyleSheet.create({
       color: 'gray',
       fontSize: 14,
       paddingTop: 3,
+    },
+    emptyContainer: {
+      paddingTop: 40,
+      paddingBottom: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyText: {
+      fontFamily: 'sans_semibold',
+      fontSize: 18,
+      color: '#303030',
+      textAlign: 'center',
+      marginBottom: 10,
+    },
+    emptySubtext: {
+      fontFamily: 'sans_regular',
+      fontSize: 14,
+      color: 'gray',
+      textAlign: 'center',
     },
 })

@@ -3,13 +3,35 @@ import React from 'react'
 
 const ArticleAuthors = ({author}) => {
   return (
-    <View key={author.id.toString()} style={{flexDirection: 'row', alignItems: 'center', paddingBottom: 30}}>
-      <Image key={author.url} source={{uri: author.avatar || 'https://via.placeholder.com/35'}} style={{borderRadius: 50, width: 35, height: 35, paddingRight: 10}} />
-      <Text key={author.title} style={{fontFamily: 'sans_semibold', fontSize: 16, paddingLeft: 10}}>{author.firstName} {author.lastName}</Text>
+    <View key={author.id.toString()} style={styles.container}>
+      <Image 
+        key={author.url} 
+        source={{uri: author.avatar || 'https://via.placeholder.com/35'}} 
+        style={styles.authorPhoto} 
+      />
+      <Text key={author.title} style={styles.authorName}>
+        {author.firstName} {author.lastName}
+      </Text>
     </View>
   )
 }
 
 export default ArticleAuthors
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingBottom: 30
+  },
+  authorPhoto: {
+    width: 35, 
+    height: 35, 
+    borderRadius: 17.5,
+    marginRight: 10,
+  },
+  authorName: {
+    fontFamily: 'sans_semibold', 
+    fontSize: 16,
+  }
+})

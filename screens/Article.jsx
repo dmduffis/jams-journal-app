@@ -1,29 +1,55 @@
 import { View, Text, SafeAreaView, FlatList, StyleSheet, Image, ScrollView } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { useQuery, gql } from '@apollo/client';
 import Markdown from 'react-native-markdown-display';
 import { useRoute } from '@react-navigation/native';
 import ArticleAuthors from '../components/ArticleAuthors';
 
-
 const Article = () => {
-const routes = useRoute();
-const { item } = routes.params
+  const [articleData, setArticleData] = useState(null);
+  const routes = useRoute();
+  const { item } = routes.params;
 
-return (
-  <ScrollView showsVerticalScrollIndicator={false} style={styles.container} >
-    <Text style={styles.title}>{item.title}</Text>
-    
-    <View>
-      {item.authors.map((author) => {
-        return (
-      <ArticleAuthors author = {author} key = {author.id} />
-    )})}
-    </View>
+  const getArticleDetails = async () => {
+    try {
+      const response = await fetch(
+        `https://jams-journal-backend.up.railway.app/articles/${item.id}`
+      );
+      const data = await response.json();
+      
+      if (data) {
+        setArticleData(data);
+      }
+    } catch (error) {
+      console.error("Error fetching article details:", error);
+    }
+  };
 
-    <View>
-    <Markdown selectable style={styles}>{item.content.markdown}</Markdown>
-    </View>
+  useEffect(() => {
+    getArticleDetails();
+  }, [item.id]);
+
+  if (!articleData) return null;
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} style={styles.container} >
+      <Text style={styles.title}>{articleData.title}</Text>
+      
+      <View>
+        {/* Handle multiple authors */}
+        {articleData.authors && articleData.authors.length > 0 && 
+          articleData.authors.map((author) => (
+            <ArticleAuthors author={author} key={author.id} />
+          ))
+        }
+        {/* Handle single author */}
+        {!articleData.authors && articleData.author && (
+          <ArticleAuthors author={articleData.author} />
+        )}
+      </View>
+
+      <View>
+        <Markdown selectable style={styles}>{articleData.content || ''}</Markdown>
+      </View>
     </ScrollView>
   )
 }
