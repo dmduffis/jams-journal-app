@@ -10,17 +10,20 @@ import Home from "./screens/Home";
 import AuthorDetails from "./screens/AuthorDetails.jsx";
 import Article from "./screens/Article";
 import * as SplashScreen from "expo-splash-screen";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import IssueDetails from "./screens/IssueDetails.jsx";
 import Videos from "./components/VideoSeriesComponent";
 import SeriesDetails from "./screens/SeriesDetails.jsx";
 import { AuthorProvider } from "./context/AuthorContext";
+import { supabase } from "./lib/supabase";
+import Auth from "./components/Auth";
 
 SplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [session, setSession] = useState(null);
   const [fontsLoaded] = useFonts({
     serif_light: require("./assets/fonts/IBMPlexSerif-Light.ttf"),
     serif_medium: require("./assets/fonts/IBMPlexSerif-Medium.ttf"),
@@ -40,6 +43,17 @@ export default function App() {
     basker_bold: require("./assets/fonts/LibreBaskerville-Bold.ttf"),
   });
 
+  // Check for existing session and listen for auth changes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
+
   useEffect(() => {
     async function prepare() {
       await SplashScreen.preventAutoHideAsync();
@@ -53,10 +67,22 @@ export default function App() {
     }
   }, [fontsLoaded]);
 
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   if (!fontsLoaded) {
     return null;
   }
 
+  // Show auth screen if not logged in
+  if (!session) {
+    return <Auth />;
+  }
+
+  // Show main app if logged in
   return (
     <AuthorProvider>
       <ApolloProvider client={client}>
