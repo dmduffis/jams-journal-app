@@ -46,7 +46,12 @@ const SearchListItem = ({item, noData, dataExists, searchQuery}) => {
     };
 
   return (
-    <TouchableOpacity onPress={() => navigation.navigate ("Article", {item})}>
+    <TouchableOpacity onPress={() => navigation.navigate ("Article", {
+      item: {
+        ...item,
+        id: item.originalId || item.id // Use original ID for navigation
+      }
+    })}>
       <View style={styles.articlesContainer}>
         <View style={styles.articleInfo}>
           <Text style={styles.articleTitle}>{item.title}</Text>

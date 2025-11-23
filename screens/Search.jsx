@@ -78,8 +78,15 @@ function Search() {
         // Extract article data
         const article = result.article || {};
         
+        // Ensure unique IDs by combining article ID with index
+        // This prevents any duplicate key errors in React
+        const uniqueId = article.id 
+          ? `${article.id}-${index}` 
+          : `search-result-${index}`;
+        
         return {
-          id: article.id || `search-result-${index}`,
+          id: uniqueId,
+          originalId: article.id, // Keep original ID for navigation
           title: article.title || 'Untitled',
           abstract: article.abstract,
           content: article.content,
