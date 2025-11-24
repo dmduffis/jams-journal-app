@@ -112,7 +112,7 @@ export default SearchListItem
 
 const styles = StyleSheet.create({
     articlesContainer: {
-        padding: 30,
+        padding: 20,
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     },
     articleTitle: {
         fontFamily: 'sans_semibold',
-        fontSize: 20,
+        fontSize: 17,
         color: '#303030',
         marginBottom: 5,
     },

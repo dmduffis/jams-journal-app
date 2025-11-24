@@ -116,7 +116,6 @@ function Search() {
       <SafeAreaView style={{marginBottom: 100}}>
         <View>
           <Text style={styles.pageTitle}>Explore</Text>
-          <Text style={styles.subtitle}>Semantic search powered by AI</Text>
           <TextInput 
             style={styles.input}
             onChangeText={setSearchInput}
