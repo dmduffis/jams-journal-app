@@ -7,9 +7,36 @@ const SearchListItem = ({item, noData, dataExists, searchQuery}) => {
 
     const navigation = useNavigation();
 
+    // Helper function to strip markdown formatting
+    const stripMarkdown = (text) => {
+        if (!text) return '';
+        return text
+            // Remove headers
+            .replace(/^#{1,6}\s+/gm, '')
+            // Remove bold/italic
+            .replace(/(\*\*|__)(.*?)\1/g, '$2')
+            .replace(/(\*|_)(.*?)\1/g, '$2')
+            // Remove links but keep text
+            .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+            // Remove inline code
+            .replace(/`([^`]+)`/g, '$1')
+            // Remove blockquotes
+            .replace(/^\>\s+/gm, '')
+            // Remove HTML tags
+            .replace(/<[^>]*>/g, '')
+            // Remove lists markers
+            .replace(/^[\*\-\+]\s+/gm, '')
+            .replace(/^\d+\.\s+/gm, '')
+            // Remove extra whitespace
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+
     // Helper function to highlight matching terms
     const highlightText = (text, query) => {
-        if (!text || !query) return <Text style={styles.matchedText}>{text}</Text>;
+        // Strip markdown first
+        const cleanText = stripMarkdown(text);
+        if (!cleanText || !query) return <Text style={styles.matchedText}>{cleanText}</Text>;
         
         // Split query into individual words and filter out common words
         const searchTerms = query
@@ -18,12 +45,12 @@ const SearchListItem = ({item, noData, dataExists, searchQuery}) => {
             .filter(term => term.length > 2); // Only highlight words longer than 2 chars
         
         if (searchTerms.length === 0) {
-            return <Text style={styles.matchedText}>{text}</Text>;
+            return <Text style={styles.matchedText}>{cleanText}</Text>;
         }
         
         // Create a regex pattern to match any of the search terms
         const pattern = new RegExp(`(${searchTerms.join('|')})`, 'gi');
-        const parts = text.split(pattern);
+        const parts = cleanText.split(pattern);
         
         return (
             <Text style={styles.matchedText} numberOfLines={2}>
