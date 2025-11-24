@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Home from '../screens/Home'
 import Search from '../screens/Search'
+import Chat from '../screens/Chat'
 import UserProfile from '../screens/UserProfile'
 import Videos from '../screens/Videos';
 import { Ionicons } from '@expo/vector-icons';
@@ -48,6 +49,18 @@ export default function BottomTabNavigation() {
             tabBarIcon: ({focused}) => {
                 return <Ionicons 
                 name={"search-sharp"}
+                size={24}
+                color={focused? '#016180': 'gray'} />
+            }
+            }}/>
+
+        <Tab.Screen
+        name="Chat"
+        component={Chat}
+        options = {{
+            tabBarIcon: ({focused}) => {
+                return <Ionicons 
+                name={"chatbubbles"}
                 size={24}
                 color={focused? '#016180': 'gray'} />
             }
