@@ -38,7 +38,6 @@ function Search() {
     setError(null);
 
     try {
-      console.log('Searching for:', query);
       const response = await fetch('https://jams-journal-backend.up.railway.app/search', {
         method: 'POST',
         headers: {
@@ -50,8 +49,6 @@ function Search() {
           threshold: 0.3, // Lower threshold for broader results
         }),
       });
-
-      console.log('Response status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -60,7 +57,6 @@ function Search() {
       }
 
       const data = await response.json();
-      console.log('Search response:', JSON.stringify(data, null, 2));
       
       // Check if the response has the expected structure
       if (!data || !data.results || !Array.isArray(data.results)) {
@@ -73,8 +69,6 @@ function Search() {
       
       // Transform semantic search results to match your existing format
       const transformedResults = data.results.map((result, index) => {
-        console.log('Processing result:', index, result);
-        
         // Extract article data
         const article = result.article || {};
         
@@ -100,8 +94,6 @@ function Search() {
         };
       });
 
-      console.log('Transformed results:', transformedResults);
-
       if (transformedResults.length > 0) {
         setArticleData(transformedResults);
         setDataExists(true);
@@ -111,7 +103,6 @@ function Search() {
       }
     } catch (err) {
       console.error('Search error:', err);
-      console.error('Error details:', err.message);
       setError('Failed to search. Please try again.');
       setArticleData(noData);
       setDataExists(false);
