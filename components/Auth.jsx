@@ -38,8 +38,6 @@ export default function Auth() {
       if (user) {
         // Then, create user profile in your backend
         try {
-          console.log('Creating user profile with:', { id: user.id, email: user.email })
-          
           const response = await fetch('https://jams-journal-backend.up.railway.app/users', {
             method: 'POST',
             headers: {
@@ -51,20 +49,14 @@ export default function Auth() {
             }),
           })
 
-          console.log('Response status:', response.status)
-          console.log('Response headers:', response.headers.get('content-type'))
-
           // Check if response is JSON before parsing
           const contentType = response.headers.get('content-type')
           if (contentType && contentType.includes('application/json')) {
             const responseData = await response.json()
-            console.log('Backend response:', responseData)
 
             if (!response.ok) {
               console.error('Failed to create user profile:', responseData)
               Alert.alert('Warning', 'Account created but profile setup incomplete')
-            } else {
-              console.log('User profile created successfully!')
             }
           } else {
             // Backend returned non-JSON (probably HTML error page)
