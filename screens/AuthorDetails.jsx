@@ -1,53 +1,37 @@
 import { Text, StyleSheet, View, FlatList, SafeAreaView, TouchableOpacity, Image, ScrollView} from 'react-native'
 import React, { Component } from 'react'
 import { useRoute } from '@react-navigation/native'
-import ArticleComponent from '../components/ArticleComponent';
-import { useQuery, gql } from '@apollo/client';
+import ArticleListItem from '../components/ArticleListItem';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useContext, useState, useEffect} from 'react';
 import { AuthorContext } from '../context/AuthorContext';
 
 
-const GET_AUTHOR_RESOURCES = gql`{
-  authors {
-    id
-    lastName
-    firstName
-    photo {
-      url
-    }
-    articles {
-      title
-      id
-      content {
-        markdown
-      }
-      authors {
-        name
-        id
-        photo {
-          url
-        }
-      }
-      journal {
-        issue
-        year
-      }
-    }
-  }
-}
-`
-
-
 const AuthorDetails = ({navigation}) => {
-
-
+  const [authorData, setAuthorData] = useState(null);
   const route = useRoute({navigation});
-  
   const { item } = route.params;
-
   const {followedAuthors, setFollowedAuthors} = useContext(AuthorContext);
+
+  const getAuthorDetails = async () => {
+    try {
+      const response = await fetch(
+        `https://jams-journal-backend.up.railway.app/authors/${item.id}`
+      );
+      const data = await response.json();
+      
+      if (data) {
+        setAuthorData(data);
+      }
+    } catch (error) {
+      console.error("Error fetching author details:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAuthorDetails();
+  }, [item.id]);
 
   const deleteAuthor = () => {
     let newAuthorList = followedAuthors.filter((id) => {
@@ -68,21 +52,15 @@ const AuthorDetails = ({navigation}) => {
     }
   }
 
+  if (!authorData) return null;
 
-  const { loading, error, data } = useQuery(GET_AUTHOR_RESOURCES)
-
-  if (loading) return null;
-  if (error) return `Error! ${error}`;
-
-  const issueData = data.authors.filter((author) => author.id === item.id)
-
-  const articles = issueData[0].articles
+  const articles = authorData.articles || []
 
     return (
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
         
         <View>
-        <Image style={styles.coverImg} source={{uri: item.avatar || 'https://via.placeholder.com/400x400'}} />
+        <Image style={styles.coverImg} source={{uri: item.avatar || 'https://flvqnuanthbcwndlibds.supabase.co/storage/v1/object/sign/Images/default_fallback_profile.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kZjI4MDE3NS1iNGExLTQ0ODctYjg1Yi02NmU4M2JiYWVmMzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZXMvZGVmYXVsdF9mYWxsYmFja19wcm9maWxlLnBuZyIsImlhdCI6MTc2NDAwMzU3MywiZXhwIjozMzQwODAzNTczfQ.c4K0LPTW2mHNf8zt_zklvsNJwnLS-WA_3avEBDW_q9Y'}} />
         <View style={styles.issueTitleContainer}>
         <Text style={styles.issueTitle}>{item.firstName} {item.lastName}</Text>
         </View>
@@ -100,25 +78,18 @@ const AuthorDetails = ({navigation}) => {
 
         <View style={styles.detailsContainter}>
         <View>
-        {articles.map((item, i) => {
-          return (<TouchableOpacity key={i} onPress={() => navigation.navigate ("Article", {item})}>
-            <View style={styles.articlesContainer}>
-            <View style={styles.articleInfo}>
-            <Text style={styles.articleTitle}>{item.title}</Text>
-            <Text style={styles.articleAuthor}>in Issue {item.journal.issue} ({item.journal.year})</Text>
+        {articles.length > 0 ? (
+          articles.map((articleItem) => {
+            return (
+            <ArticleListItem item={articleItem} key={articleItem.id} />
+          ) 
+          })
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No articles yet.</Text>
+            <Text style={styles.emptySubtext}>This author hasn't published any articles in JAMS.</Text>
             </View>
-            <View>
-              <Ionicons style={{paddingTop: 15}}
-              name='chevron-forward-outline'
-              size={12}
-              color='gray'
-              />
-            </View>
-            </View>
-          </TouchableOpacity>) 
-        })}
-            
-          
+        )}
     </View>
     </View>
       </ScrollView>
@@ -159,32 +130,22 @@ const styles = StyleSheet.create({
     fontSize: 25,
     paddingBottom: 10,
   },
-  articlesContainer: {
-    paddingBottom: 15,
-    display: 'flex',
-    flexDirection: 'row',
+  emptyContainer: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 0.2,
-    borderStyle: 'solid',
-    borderBottomColor: 'gray',
+    justifyContent: 'center',
+    paddingVertical: 40,
     },
-  // articleInfo: {
-  //   display: 'flex',
-  //   flexBasis: 'auto',
-  //   flexDirection: 'column'
-  // },
-  articleTitle: {
+  emptyText: {
       fontFamily: 'sans_semibold',
-      fontSize: 17,
-      paddingTop: 15,
-      width: 300,
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 8,
     },
-    articleAuthor: {
-      fontFamily: 'sans_medium',
-      color: 'gray',
+  emptySubtext: {
+    fontFamily: 'sans_regular',
       fontSize: 14,
-      paddingTop: 3,
+    color: '#999',
+    textAlign: 'center',
     },
     followedBtn: { 
       display: 'flex',

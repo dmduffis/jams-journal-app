@@ -13,8 +13,8 @@ function Search() {
 
   const noData = [
     {
-      title: 'No results found',
-      id: 1,
+    title: 'No results found',
+    id: 1,
     }
   ]
 
@@ -113,19 +113,19 @@ function Search() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <SafeAreaView style={{marginBottom: 100}}>
-        <View>
-          <Text style={styles.pageTitle}>Explore</Text>
+    <SafeAreaView style={{marginBottom: 100}}>
+      <View>
+      <Text style={styles.pageTitle}>Explore</Text>
           <TextInput 
             style={styles.input}
-            onChangeText={setSearchInput}
-            value={searchInput}
-            placeholder="Search articles by meaning..."
+          onChangeText={setSearchInput}
+          value={searchInput}
+            placeholder="Try: 'What is contextualization?'"
             placeholderTextColor="#999"
-          />
-        </View>
+        />
+      </View>
 
-        <View style={styles.container}>
+      <View style={styles.container}>
           {loading && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#357db5" />
@@ -149,25 +149,25 @@ function Search() {
           )}
 
           {!loading && !error && articleData.length > 0 && (
-            <FlatList
-              data={articleData}
+        <FlatList
+        data={articleData}
               keyExtractor={item => item.id.toString()}
-              renderItem={({item}) => 
+        renderItem={({item}) => 
                 <SearchListItem 
                   key={item.id} 
                   item={item} 
                   dataExists={dataExists}
                   searchQuery={searchInput}
                 />
-              }
-              vertical
-              showsVerticalScrollIndicator={false}
-              removeClippedSubviews={true}
+        }
+        vertical
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
               contentContainerStyle={{columnGap: 10}}
             />
           )}
-        </View>
-      </SafeAreaView>
+      </View>
+    </SafeAreaView>
     </TouchableWithoutFeedback>
   );
 }

@@ -124,7 +124,7 @@ const tagsStyles = {
 
 const Article = () => {
   const [articleData, setArticleData] = useState(null);
-  const routes = useRoute();
+const routes = useRoute();
   const { item } = routes.params;
   const { width } = useWindowDimensions();
 
@@ -215,9 +215,12 @@ return (
     <View>
         {/* Handle multiple authors */}
         {articleData.authors && articleData.authors.length > 0 && 
-          articleData.authors.map((author) => (
-            <ArticleAuthors author={author} key={author.id} />
-          ))
+          articleData.authors
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map((authorItem, index) => {
+              const author = authorItem.author || authorItem;
+              return <ArticleAuthors author={author} key={author.id || index} />;
+            })
         }
         {/* Handle single author */}
         {!articleData.authors && articleData.author && (

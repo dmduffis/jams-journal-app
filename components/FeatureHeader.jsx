@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
-const FeatureHeader = () => {
+  const FeatureHeader = () => {
   const [currentIssue, setCurrentIssue] = useState(null);
   const navigation = useNavigation();
 

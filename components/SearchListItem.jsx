@@ -79,22 +79,29 @@ const SearchListItem = ({item, noData, dataExists, searchQuery}) => {
         id: item.originalId || item.id // Use original ID for navigation
       }
     })}>
-      <View style={styles.articlesContainer}>
-        <View style={styles.articleInfo}>
-          <Text style={styles.articleTitle}>{item.title}</Text>
-          {item.authors && item.authors.length > 0 && item.authors.map((author, index) => (
-            <Text key={`${item.id}-author-${author.id || index}`} style={styles.articleAuthor}>
-              {author.name || `${author.firstName} ${author.lastName}`}
-            </Text>
-          ))}
+            <View style={styles.articlesContainer}>
+            <View style={styles.articleInfo}>
+            <Text style={styles.articleTitle}>{item.title}</Text>
+          {item.authors && item.authors.length > 0 && 
+            item.authors
+              .sort((a, b) => (a.order || 0) - (b.order || 0))
+              .map((authorItem, index) => {
+                const author = authorItem.author || authorItem;
+                return (
+                  <Text key={`${item.id}-author-${author.id || index}`} style={styles.articleAuthor}>
+                    {author.name || `${author.firstName} ${author.lastName}`}
+                  </Text>
+                );
+              })
+          }
           {item.matchedChunk && highlightText(item.matchedChunk, searchQuery)}
           {item.similarity && (
             <Text style={styles.similarityText}>
               {Math.round(item.similarity * 100)}% relevant
             </Text>
           )}
-        </View>
-        <View>
+            </View>
+            <View>
           {dataExists && (
             <Ionicons
               name='chevron-forward-outline'
@@ -102,9 +109,9 @@ const SearchListItem = ({item, noData, dataExists, searchQuery}) => {
               color='gray'
             />
           )}
-        </View>
-      </View>
-    </TouchableOpacity>
+            </View>
+            </View>
+          </TouchableOpacity>
   )
 }
 
@@ -120,23 +127,23 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF',
         marginBottom: 1,
         borderRadius: 5,
-    },
+        },
     articleInfo: {
         flex: 1,
         marginRight: 10,
     },
-    articleTitle: {
-        fontFamily: 'sans_semibold',
+      articleTitle: {
+          fontFamily: 'sans_semibold',
         fontSize: 17,
         color: '#303030',
         marginBottom: 5,
-    },
-    articleAuthor: {
-        fontFamily: 'sans_medium',
-        color: 'gray',
-        fontSize: 13,
-        paddingTop: 3,
-    },
+        },
+        articleAuthor: {
+          fontFamily: 'sans_medium',
+          color: 'gray',
+          fontSize: 13,
+          paddingTop: 3,
+        },
     matchedText: {
         fontFamily: 'sans_regular',
         fontSize: 12,

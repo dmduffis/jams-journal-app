@@ -46,9 +46,9 @@ const IssueDetails = ({navigation}) => {
         <View>
         {articles.length > 0 ? (
           articles.map((item) => {
-            return (
-            <ArticleListItem item={item} key={item.id} />
-          ) 
+          return (
+          <ArticleListItem item={item} key={item.id} />
+        ) 
           })
         ) : (
           <View style={styles.emptyContainer}>

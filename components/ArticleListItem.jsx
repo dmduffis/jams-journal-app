@@ -14,11 +14,16 @@ const ArticleListItem = ({item}) => {
             <Text style={styles.articleTitle}>{item.title}</Text>
             {/* Handle multiple authors */}
             {item.authors && item.authors.length > 0 && 
-              item.authors.map((author) => (
-                <Text key={author.id} style={styles.articleAuthor}>
-                  {author.firstName} {author.lastName}
-                </Text>
-              ))
+              item.authors
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .map((authorItem, index) => {
+                  const author = authorItem.author || authorItem;
+                  return (
+                    <Text key={author.id || index} style={styles.articleAuthor}>
+                      {author.firstName} {author.lastName}
+                    </Text>
+                  );
+                })
             }
             {/* Handle single author */}
             {!item.authors && item.author && (
