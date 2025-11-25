@@ -83,7 +83,8 @@ export default TopArticlesItem
 
 const styles = StyleSheet.create({
     articlesContainer: {
-        padding: 6,
+        paddingVertical: 6,
+        paddingRight: 6,
         display: 'flex',
         flexDirection: 'row',
         marginBottom: 1,
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         borderRadius: 12,
-        borderWidth: 2,
+        borderWidth: 1,
         borderColor: '#fff',
     },
     articleInfo: {
