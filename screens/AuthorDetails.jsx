@@ -54,7 +54,10 @@ const AuthorDetails = ({navigation}) => {
 
   if (!authorData) return null;
 
-  const articles = authorData.articles || []
+  // Extract articles from the nested structure
+  const articles = (authorData.articles || [])
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map(item => item.article || item)
 
     return (
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>

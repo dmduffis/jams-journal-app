@@ -1,9 +1,8 @@
-import { View, Text, SafeAreaView, FlatList, StyleSheet, Image, ScrollView, useWindowDimensions } from 'react-native'
+import { View, Text, SafeAreaView, FlatList, StyleSheet, Image, ScrollView, useWindowDimensions, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import RenderHtml from 'react-native-render-html';
 import Markdown from 'react-native-markdown-display';
-import { useRoute } from '@react-navigation/native';
-import ArticleAuthors from '../components/ArticleAuthors';
+import { useRoute, useNavigation } from '@react-navigation/native';
 
 // Define system fonts for HTML rendering
 const systemFonts = [
@@ -124,9 +123,10 @@ const tagsStyles = {
 
 const Article = () => {
   const [articleData, setArticleData] = useState(null);
-const routes = useRoute();
+  const routes = useRoute();
   const { item } = routes.params;
   const { width } = useWindowDimensions();
+  const navigation = useNavigation();
 
   const getArticleDetails = async () => {
     try {
@@ -212,19 +212,44 @@ return (
   <ScrollView showsVerticalScrollIndicator={false} style={styles.container} >
       <Text style={styles.title}>{articleData.title}</Text>
     
-    <View>
+    <View style={styles.authorsWrapper}>
         {/* Handle multiple authors */}
         {articleData.authors && articleData.authors.length > 0 && 
           articleData.authors
             .sort((a, b) => (a.order || 0) - (b.order || 0))
             .map((authorItem, index) => {
               const author = authorItem.author || authorItem;
-              return <ArticleAuthors author={author} key={author.id || index} />;
+              return (
+                <TouchableOpacity 
+                  key={author.id || index}
+                  style={styles.authorContainer}
+                  onPress={() => navigation.navigate('Author Details', { item: author })}
+                >
+                  <Image 
+                    source={{uri: author.avatar || 'https://flvqnuanthbcwndlibds.supabase.co/storage/v1/object/sign/Images/default_fallback_profile.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kZjI4MDE3NS1iNGExLTQ0ODctYjg1Yi02NmU4M2JiYWVmMzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZXMvZGVmYXVsdF9mYWxsYmFja19wcm9maWxlLnBuZyIsImlhdCI6MTc2NDAwMzU3MywiZXhwIjozMzQwODAzNTczfQ.c4K0LPTW2mHNf8zt_zklvsNJwnLS-WA_3avEBDW_q9Y'}} 
+                    style={styles.authorPhoto}
+                  />
+                  <Text style={styles.authorName}>
+                    {author.firstName} {author.lastName}
+                  </Text>
+                </TouchableOpacity>
+              );
             })
         }
-        {/* Handle single author */}
+        {/* Handle single author (old format) */}
         {!articleData.authors && articleData.author && (
-          <ArticleAuthors author={articleData.author} />
+          <TouchableOpacity 
+            style={styles.authorContainer}
+            onPress={() => navigation.navigate('Author Details', { item: articleData.author })}
+          >
+            <Image 
+              source={{uri: articleData.author.avatar || 'https://flvqnuanthbcwndlibds.supabase.co/storage/v1/object/sign/Images/default_fallback_profile.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kZjI4MDE3NS1iNGExLTQ0ODctYjg1Yi02NmU4M2JiYWVmMzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZXMvZGVmYXVsdF9mYWxsYmFja19wcm9maWxlLnBuZyIsImlhdCI6MTc2NDAwMzU3MywiZXhwIjozMzQwODAzNTczfQ.c4K0LPTW2mHNf8zt_zklvsNJwnLS-WA_3avEBDW_q9Y'}} 
+              style={styles.authorPhoto}
+            />
+            <Text style={styles.authorName}>
+              {articleData.author.firstName} {articleData.author.lastName}
+            </Text>
+          </TouchableOpacity>
         )}
     </View>
 
@@ -327,5 +352,23 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: 'sans_semibold',
     lineHeight: 40,
+  },
+  authorsWrapper: {
+    paddingBottom: 20,
+  },
+  authorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  authorPhoto: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  authorName: {
+    fontFamily: 'sans_semibold',
+    fontSize: 16,
   },
 })
