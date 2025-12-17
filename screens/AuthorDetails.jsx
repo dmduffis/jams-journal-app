@@ -74,9 +74,38 @@ const AuthorDetails = ({navigation}) => {
   if (loading) return null;
   if (error) return `Error! ${error}`;
 
-  const issueData = data.authors.filter((author) => author.id === item.id)
+  const issueData = data?.authors?.filter((author) => author.id === item.id) || []
 
-  const articles = issueData[0].articles
+  const articles = (issueData[0]?.articles || []).map((article) => {
+    // Normalize authors - extract actual author objects from nested structure
+    if (article.authors && Array.isArray(article.authors)) {
+      // Authors array contains objects with nested 'author' property
+      // Extract the actual author objects and normalize avatar/photo
+      article.authors = article.authors
+        .map(authorItem => {
+          const author = authorItem.author || authorItem;
+          if (author) {
+            // Normalize avatar/photo field
+            author.avatar = author.avatar 
+              || author.photo?.url 
+              || (typeof author.photo === 'string' ? author.photo : null);
+          }
+          return author;
+        })
+        .filter(author => author); // Remove any null/undefined
+    } else if (article.author) {
+      // Single author case - normalize avatar/photo
+      const author = article.author;
+      author.avatar = author.avatar 
+        || author.photo?.url 
+        || (typeof author.photo === 'string' ? author.photo : null);
+      article.authors = [author];
+    } else {
+      // No authors at all
+      article.authors = [];
+    }
+    return article;
+  });
 
     return (
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
@@ -100,23 +129,30 @@ const AuthorDetails = ({navigation}) => {
 
         <View style={styles.detailsContainter}>
         <View>
-        {articles.map((item, i) => {
-          return (<TouchableOpacity key={i} onPress={() => navigation.navigate ("Article", {item})}>
-            <View style={styles.articlesContainer}>
-            <View style={styles.articleInfo}>
-            <Text style={styles.articleTitle}>{item.title}</Text>
-            <Text style={styles.articleAuthor}>in Issue {item.journal.issue} ({item.journal.year})</Text>
-            </View>
-            <View>
-              <Ionicons style={{paddingTop: 15}}
-              name='chevron-forward-outline'
-              size={12}
-              color='gray'
-              />
-            </View>
-            </View>
-          </TouchableOpacity>) 
-        })}
+        {articles && articles.length > 0 ? (
+          articles.map((article, index) => {
+            return (<TouchableOpacity key={article.id || `author-article-${index}`} onPress={() => navigation.navigate ("Article", {item: article})}>
+              <View style={styles.articlesContainer}>
+              <View style={styles.articleInfo}>
+              <Text style={styles.articleTitle}>{article.title}</Text>
+              <Text style={styles.articleAuthor}>in Issue {article.journal?.issue || 'N/A'} ({article.journal?.year || 'N/A'})</Text>
+              </View>
+              <View>
+                <Ionicons style={{paddingTop: 15}}
+                name='chevron-forward-outline'
+                size={12}
+                color='gray'
+                />
+              </View>
+              </View>
+            </TouchableOpacity>) 
+          })
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No articles available yet.</Text>
+            <Text style={styles.emptySubtext}>Check back soon for new content!</Text>
+          </View>
+        )}
             
           
     </View>
@@ -185,6 +221,25 @@ const styles = StyleSheet.create({
       color: 'gray',
       fontSize: 14,
       paddingTop: 3,
+    },
+    emptyContainer: {
+      paddingTop: 40,
+      paddingBottom: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyText: {
+      fontFamily: 'sans_semibold',
+      fontSize: 18,
+      color: '#303030',
+      textAlign: 'center',
+      marginBottom: 10,
+    },
+    emptySubtext: {
+      fontFamily: 'sans_regular',
+      fontSize: 14,
+      color: 'gray',
+      textAlign: 'center',
     },
     followedBtn: { 
       display: 'flex',

@@ -14,16 +14,29 @@ const ArticleListItem = ({item}) => {
             <Text style={styles.articleTitle}>{item.title}</Text>
             {/* Handle multiple authors */}
             {item.authors && item.authors.length > 0 && 
-              item.authors.map((author) => (
-                <Text key={author.id} style={styles.articleAuthor}>
-                  {author.firstName} {author.lastName}
-                </Text>
-              ))
+              item.authors.map((author, index) => {
+                // Handle different author field structures
+                const authorName = author.name 
+                  || (author.firstName && author.lastName ? `${author.firstName} ${author.lastName}` : null)
+                  || author.firstName 
+                  || author.lastName
+                  || 'Unknown Author';
+                
+                return (
+                  <Text key={author.id || `author-${item.id}-${index}`} style={styles.articleAuthor}>
+                    {authorName}
+                  </Text>
+                );
+              })
             }
             {/* Handle single author */}
             {!item.authors && item.author && (
               <Text style={styles.articleAuthor}>
-                {item.author.firstName} {item.author.lastName}
+                {item.author.name 
+                  || (item.author.firstName && item.author.lastName ? `${item.author.firstName} ${item.author.lastName}` : null)
+                  || item.author.firstName 
+                  || item.author.lastName
+                  || 'Unknown Author'}
               </Text>
             )}
             </View>

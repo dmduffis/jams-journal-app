@@ -11,6 +11,7 @@ const Author = ({item}) => {
   const {followedAuthors, setFollowedAuthors} = useContext(AuthorContext);
 
   const[followed, setFollowed] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const deleteAuthor = () => {
     let newAuthorList = followedAuthors.filter((id) => {
@@ -31,13 +32,22 @@ const Author = ({item}) => {
     }
   }
 
-
-
+  // Default placeholder from Supabase storage
+  const DEFAULT_AUTHOR_PLACEHOLDER = 'https://flvqnuanthbcwndlibds.supabase.co/storage/v1/object/sign/Images/default_fallback_profile.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kZjI4MDE3NS1iNGExLTQ0ODctYjg1Yi02NmU4M2JiYWVmMzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZXMvZGVmYXVsdF9mYWxsYmFja19wcm9maWxlLnBuZyIsImlhdCI6MTc2NDAwMzU3MywiZXhwIjozMzQwODAzNTczfQ.c4K0LPTW2mHNf8zt_zklvsNJwnLS-WA_3avEBDW_q9Y';
+  const displayUrl = (!item.avatar || imageError) ? DEFAULT_AUTHOR_PLACEHOLDER : item.avatar;
 
   return (
       <View style={styles.container}>
         <TouchableOpacity onPress={() => navigation.navigate('Author Details', {item})}>
-          <Image style={styles.photo} source={{uri: item.avatar}}/>
+          <Image 
+            style={styles.photo} 
+            source={{uri: displayUrl}}
+            defaultSource={{uri: DEFAULT_AUTHOR_PLACEHOLDER}}
+            onError={() => setImageError(true)}
+            onLoadStart={() => {
+              if (item.avatar) setImageError(false);
+            }}
+          />
           <Text style={styles.firstName}>{item.firstName}</Text>
           <Text style={styles.lastName}>{item.lastName}</Text>
       </TouchableOpacity>

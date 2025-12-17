@@ -136,6 +136,34 @@ const Article = () => {
       const data = await response.json();
       
       if (data) {
+        // Normalize authors - extract actual author objects from nested structure
+        if (data.authors && Array.isArray(data.authors)) {
+          // Authors array contains objects with nested 'author' property
+          // Extract the actual author objects and normalize avatar/photo
+          data.authors = data.authors
+            .map(authorItem => {
+              const author = authorItem.author || authorItem;
+              if (author) {
+                // Normalize avatar/photo field
+                author.avatar = author.avatar 
+                  || author.photo?.url 
+                  || (typeof author.photo === 'string' ? author.photo : null);
+              }
+              return author;
+            })
+            .filter(author => author); // Remove any null/undefined
+        } else if (data.author) {
+          // Single author case - normalize avatar/photo
+          const author = data.author;
+          author.avatar = author.avatar 
+            || author.photo?.url 
+            || (typeof author.photo === 'string' ? author.photo : null);
+          data.authors = [author];
+        } else {
+          // No authors at all
+          data.authors = [];
+        }
+        
         setArticleData(data);
       }
     } catch (error) {
@@ -215,13 +243,30 @@ return (
     <View>
         {/* Handle multiple authors */}
         {articleData.authors && articleData.authors.length > 0 && 
-          articleData.authors.map((author) => (
-            <ArticleAuthors author={author} key={author.id} />
-          ))
+          articleData.authors.map((author, index) => {
+            // Normalize author object to ensure it has the expected structure
+            const normalizedAuthor = {
+              ...author,
+              firstName: author.firstName || (author.name ? author.name.split(' ')[0] : ''),
+              lastName: author.lastName || (author.name ? author.name.split(' ').slice(1).join(' ') : ''),
+              avatar: author.avatar || author.photo?.url || author.photo
+            };
+            return (
+              <ArticleAuthors author={normalizedAuthor} key={author.id || `article-author-${index}`} />
+            );
+          })
         }
         {/* Handle single author */}
         {!articleData.authors && articleData.author && (
-          <ArticleAuthors author={articleData.author} />
+          <ArticleAuthors 
+            author={{
+              ...articleData.author,
+              firstName: articleData.author.firstName || (articleData.author.name ? articleData.author.name.split(' ')[0] : ''),
+              lastName: articleData.author.lastName || (articleData.author.name ? articleData.author.name.split(' ').slice(1).join(' ') : ''),
+              avatar: articleData.author.avatar || articleData.author.photo?.url || articleData.author.photo
+            }} 
+            key={articleData.author.id || 'single-author'} 
+          />
         )}
     </View>
 

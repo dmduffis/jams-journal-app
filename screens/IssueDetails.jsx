@@ -29,7 +29,37 @@ const IssueDetails = ({navigation}) => {
 
   if (!issueData) return null;
 
-  const articles = issueData.articles || []
+  const articles = (Array.isArray(issueData.articles) ? issueData.articles : [])
+    .map((article) => {
+      // Normalize authors - extract actual author objects from nested structure
+      if (article.authors && Array.isArray(article.authors)) {
+        // Authors array contains objects with nested 'author' property
+        // Extract the actual author objects and normalize avatar/photo
+        article.authors = article.authors
+          .map(authorItem => {
+            const author = authorItem.author || authorItem;
+            if (author) {
+              // Normalize avatar/photo field
+              author.avatar = author.avatar 
+                || author.photo?.url 
+                || (typeof author.photo === 'string' ? author.photo : null);
+            }
+            return author;
+          })
+          .filter(author => author); // Remove any null/undefined
+      } else if (article.author) {
+        // Single author case - normalize avatar/photo
+        const author = article.author;
+        author.avatar = author.avatar 
+          || author.photo?.url 
+          || (typeof author.photo === 'string' ? author.photo : null);
+        article.authors = [author];
+      } else {
+        // No authors at all
+        article.authors = [];
+      }
+      return article;
+    });
 
     return (
 <ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
@@ -45,9 +75,9 @@ const IssueDetails = ({navigation}) => {
         <View style={styles.detailsContainter}>
         <View>
         {articles.length > 0 ? (
-          articles.map((item) => {
+          articles.map((article, index) => {
             return (
-            <ArticleListItem item={item} key={item.id} />
+            <ArticleListItem item={article} key={article.id || `article-${index}`} />
           ) 
           })
         ) : (

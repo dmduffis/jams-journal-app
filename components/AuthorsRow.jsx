@@ -9,11 +9,47 @@ const [authorData, setAuthorData] = useState([]);
 const getAuthorData = async () => {
   try {
     const response = await fetch('https://jams-journal-backend.up.railway.app/authors');
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`HTTP error! status: ${response.status}`, errorText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Response is not JSON:', text.substring(0, 200));
+      throw new Error('Response is not JSON');
+    }
+    
     const data = await response.json();
-    const featuredAuthors = data.filter(author => author.featured === true);
+    
+    // Handle different response structures
+    let authorsArray = null;
+    
+    if (Array.isArray(data)) {
+      authorsArray = data;
+    } else if (data && Array.isArray(data.authors)) {
+      authorsArray = data.authors;
+    } else if (data && Array.isArray(data.data)) {
+      authorsArray = data.data;
+    } else {
+      console.warn('Author data is not in expected format:', data);
+      setAuthorData([]);
+      return;
+    }
+    
+    if (!authorsArray || authorsArray.length === 0) {
+      setAuthorData([]);
+      return;
+    }
+    
+    const featuredAuthors = authorsArray.filter(author => author && author.featured === true);
     setAuthorData(featuredAuthors);
   } catch (error) {
     console.error('Error fetching author data:', error);
+    setAuthorData([]);
   }
 }
 
