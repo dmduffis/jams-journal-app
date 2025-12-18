@@ -52,8 +52,24 @@ function Search() {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Search API error:', response.status, errorText);
-        throw new Error(`Search failed: ${response.status} - ${errorText.substring(0, 100)}`);
+        let errorMessage = `Search failed: ${response.status}`;
+        
+        // Try to parse error message from response
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText.substring(0, 100) || errorMessage;
+        }
+        
+        console.error('Search API error:', response.status, errorMessage);
+        
+        // Check if it's an API key error
+        if (errorMessage.toLowerCase().includes('api key') || errorMessage.toLowerCase().includes('api_key')) {
+          throw new Error('Backend API key configuration error. Please contact support.');
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

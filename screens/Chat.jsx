@@ -74,7 +74,25 @@ const Chat = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from AI');
+        const errorText = await response.text();
+        let errorMessage = 'Failed to get response from AI';
+        
+        // Try to parse error message from response
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          if (errorText) {
+            errorMessage = errorText.substring(0, 200);
+          }
+        }
+        
+        // Check if it's an API key error
+        if (errorMessage.toLowerCase().includes('api key') || errorMessage.toLowerCase().includes('api_key') || errorMessage.toLowerCase().includes('incorrect api key')) {
+          errorMessage = 'Backend API key configuration error. Please contact support.';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
