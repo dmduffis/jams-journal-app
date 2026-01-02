@@ -46,7 +46,7 @@ function Search() {
         body: JSON.stringify({
           query: query,
           limit: 20,
-          threshold: 0.3, // Lower threshold for broader results
+          threshold: 0.3,
         }),
       });
       
@@ -89,7 +89,6 @@ function Search() {
         const article = result.article || {};
         
         // Ensure unique IDs by combining article ID with index
-        // This prevents any duplicate key errors in React
         const uniqueId = article.id 
           ? `${article.id}-${index}` 
           : `search-result-${index}`;
