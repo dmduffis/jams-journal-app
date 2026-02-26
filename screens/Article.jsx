@@ -251,15 +251,6 @@ const Article = () => {
       </View>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       <Text style={styles.title}>{articleData.title}</Text>
-      {(articleData.authors?.length > 0 || articleData.author) && (
-        <Text style={styles.articleByline}>
-          {articleData.authors?.length > 0
-            ? articleData.authors
-                .map((a) => [a.firstName, a.lastName].filter(Boolean).join(" ") || a.name || "Author")
-                .join(", ")
-            : [articleData.author?.firstName, articleData.author?.lastName].filter(Boolean).join(" ") || articleData.author?.name || "Author"}
-        </Text>
-      )}
     <View>
         {/* Handle multiple authors */}
         {articleData.authors && articleData.authors.length > 0 && 
@@ -419,11 +410,5 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: 'sans_semibold',
     lineHeight: 40,
-  },
-  articleByline: {
-    fontFamily: 'sans_medium',
-    fontSize: 16,
-    color: '#555',
-    paddingBottom: 20,
   },
 })
