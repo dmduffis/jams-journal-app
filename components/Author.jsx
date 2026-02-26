@@ -4,33 +4,27 @@ import { useNavigation } from '@react-navigation/native'
 import { useContext } from 'react'
 import { AuthorContext } from '../context/AuthorContext'
 
-const Author = ({item}) => {
-
+const Author = ({ item }) => {
   const navigation = useNavigation();
-
-  const {followedAuthors, setFollowedAuthors} = useContext(AuthorContext);
-
-  const[followed, setFollowed] = useState(false);
+  const { isFollowing, addFollow, removeFollow } = useContext(AuthorContext);
   const [imageError, setImageError] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
-  const deleteAuthor = () => {
-    let newAuthorList = followedAuthors.filter((id) => {
-        return id !== item.id
-      })
-    setFollowedAuthors(newAuthorList);
-  }
-
-  const addAuthor = () => {
-    setFollowedAuthors(prevAuthors => [...prevAuthors, item.id])
-  }
-
-  const handleFollow = () => {
-    if (followedAuthors.includes(item.id)) {
-      deleteAuthor();
-    } else {
-      addAuthor();
+  const handleFollow = async () => {
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing(item.id)) {
+        await removeFollow(item.id);
+      } else {
+        await addFollow(item.id);
+      }
+    } catch (_e) {
+      // Error already logged in context
+    } finally {
+      setFollowLoading(false);
     }
-  }
+  };
 
   // Default placeholder from Supabase storage
   const DEFAULT_AUTHOR_PLACEHOLDER = 'https://flvqnuanthbcwndlibds.supabase.co/storage/v1/object/sign/Images/default_fallback_profile.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kZjI4MDE3NS1iNGExLTQ0ODctYjg1Yi02NmU4M2JiYWVmMzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZXMvZGVmYXVsdF9mYWxsYmFja19wcm9maWxlLnBuZyIsImlhdCI6MTc2NDAwMzU3MywiZXhwIjozMzQwODAzNTczfQ.c4K0LPTW2mHNf8zt_zklvsNJwnLS-WA_3avEBDW_q9Y';
@@ -51,8 +45,14 @@ const Author = ({item}) => {
           <Text style={styles.firstName}>{item.firstName}</Text>
           <Text style={styles.lastName}>{item.lastName}</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={followedAuthors.includes(item.id) ? styles.followedBtn : styles.followBtn} onPress={() => {handleFollow()}}>
-          <Text style={followedAuthors.includes(item.id) ? styles.followedTxt : styles.followTxt}>{followedAuthors.includes(item.id) ? 'Following' : 'Follow'}</Text>
+      <TouchableOpacity
+        style={isFollowing(item.id) ? styles.followedBtn : styles.followBtn}
+        onPress={handleFollow}
+        disabled={followLoading}
+      >
+        <Text style={isFollowing(item.id) ? styles.followedTxt : styles.followTxt}>
+          {followLoading ? "…" : isFollowing(item.id) ? "Following" : "Follow"}
+        </Text>
       </TouchableOpacity>
     </View>
   )
