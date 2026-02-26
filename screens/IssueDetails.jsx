@@ -2,6 +2,7 @@ import { Text, StyleSheet, View, FlatList, SafeAreaView, TouchableOpacity, Image
 import React, { useState, useEffect } from 'react'
 import { useRoute } from '@react-navigation/native'
 import ArticleListItem from '../components/ArticleListItem';
+import { JAMS_BACKEND_BASE_URL } from '../lib/jamsBackend';
 
 const IssueDetails = ({navigation}) => {
   const [issueData, setIssueData] = useState(null);
@@ -11,7 +12,7 @@ const IssueDetails = ({navigation}) => {
   const getIssueDetails = async () => {
     try {
       const response = await fetch(
-        `https://jams-journal-backend.up.railway.app/journals/${item.id}`
+        `${JAMS_BACKEND_BASE_URL}/journals/${item.id}`
       );
       const data = await response.json();
       

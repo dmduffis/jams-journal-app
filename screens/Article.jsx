@@ -1,8 +1,9 @@
-import { View, Text, SafeAreaView, FlatList, StyleSheet, Image, ScrollView, useWindowDimensions } from 'react-native'
+import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import RenderHtml from 'react-native-render-html';
 import Markdown from 'react-native-markdown-display';
 import { useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ArticleAuthors from '../components/ArticleAuthors';
 
 // Define system fonts for HTML rendering
@@ -175,6 +176,7 @@ const Article = () => {
     getArticleDetails();
   }, [item.id]);
 
+  const insets = useSafeAreaInsets();
   if (!articleData) return null;
 
   // Convert superscript notation to unicode superscript characters
@@ -236,8 +238,10 @@ const Article = () => {
     return segments;
   };
 
-return (
-  <ScrollView showsVerticalScrollIndicator={false} style={styles.container} >
+  return (
+    <View style={styles.wrapper}>
+      <View style={[styles.statusBarFill, { height: insets.top }]} />
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       <Text style={styles.title}>{articleData.title}</Text>
     
     <View>
@@ -292,8 +296,9 @@ return (
           return null;
         })}
     </View>
-    </ScrollView>
-  )
+      </ScrollView>
+    </View>
+  );
 }
 
 export default Article
@@ -355,8 +360,17 @@ const markdownStyles = StyleSheet.create({
 
 // Regular styles for the component
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  statusBarFill: {
+    backgroundColor: '#fff',
+    width: '100%',
+  },
   container: {
-    paddingTop: 100,
+    flex: 1,
+    paddingTop: 24,
     paddingLeft: 20,
     paddingRight: 20,
     marginBottom: 50,

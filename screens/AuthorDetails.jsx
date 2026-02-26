@@ -1,64 +1,117 @@
-import { Text, StyleSheet, View, FlatList, SafeAreaView, TouchableOpacity, Image, ScrollView} from 'react-native'
-import React, { Component } from 'react'
-import { useRoute } from '@react-navigation/native'
-import ArticleComponent from '../components/ArticleComponent';
-import { useQuery, gql } from '@apollo/client';
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { useContext, useState, useEffect} from 'react';
-import { AuthorContext } from '../context/AuthorContext';
+import { Text, StyleSheet, View, TouchableOpacity, Image, ScrollView, ActivityIndicator } from "react-native";
+import React, { useState, useEffect } from "react";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { useContext } from "react";
+import { AuthorContext } from "../context/AuthorContext";
+import { JAMS_BACKEND_BASE_URL } from "../lib/jamsBackend";
 
-
-const GET_AUTHOR_RESOURCES = gql`{
-  authors {
-    id
-    lastName
-    firstName
-    photo {
-      url
-    }
-    articles {
-      title
-      id
-      content {
-        markdown
-      }
-      authors {
-        name
-        id
-        photo {
-          url
-        }
-      }
-      journal {
-        issue
-        year
-      }
-    }
-  }
-}
-`
-
-
-const AuthorDetails = ({navigation}) => {
-
-
-  const route = useRoute({navigation});
-  
+const AuthorDetails = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
   const { item } = route.params;
 
   const { isFollowing, addFollow, removeFollow } = useContext(AuthorContext);
   const [followLoading, setFollowLoading] = useState(false);
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const authorId = item?.id != null ? String(item.id) : null;
+    const fn = (item?.firstName || "").trim().toLowerCase();
+    const ln = (item?.lastName || "").trim().toLowerCase();
+
+    /** Article authors are { author: { id, firstName, lastName }, order } – use nested author for comparison. */
+    function matchesAuthor(authorEntry) {
+      const a = authorEntry?.author ?? authorEntry;
+      const id = a?.id != null ? String(a.id) : null;
+      const first = (a?.firstName || "").trim().toLowerCase();
+      const last = (a?.lastName || "").trim().toLowerCase();
+      if (authorId && id) return id === authorId;
+      return fn && ln && first === fn && last === ln;
+    }
+
+    /** Same normalization as IssueDetails – authors from journal payload. */
+    function normalizeArticle(article, journal) {
+      const a = { ...article };
+      if (a.journal == null && journal) {
+        a.journal = {
+          issue: journal.issue ?? journal.issueNumber,
+          year: journal.year,
+          title: journal.title,
+        };
+      }
+      if (a.authors && Array.isArray(a.authors)) {
+        a.authors = a.authors
+          .map((authorItem) => {
+            const author = authorItem?.author || authorItem;
+            if (!author) return null;
+            return {
+              ...author,
+              avatar: author.avatar || author.photo?.url || (typeof author.photo === "string" ? author.photo : null) || author.photo,
+            };
+          })
+          .filter(Boolean);
+      } else if (a.author) {
+        const author = a.author;
+        a.authors = [{ ...author, avatar: author.avatar || author.photo?.url || (typeof author.photo === "string" ? author.photo : null) || author.photo }];
+      } else {
+        a.authors = [];
+      }
+      return a;
+    }
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        let list = [];
+        // Same data source as Issue Details: GET /journals returns journals with articles embedded
+        const journalsRes = await fetch(`${JAMS_BACKEND_BASE_URL}/journals`);
+        if (journalsRes.ok) {
+          const journalsData = await journalsRes.json();
+          const journals = Array.isArray(journalsData) ? journalsData : journalsData?.data ?? [];
+          for (const journal of journals) {
+            if (cancelled) break;
+            const arts = Array.isArray(journal?.articles) ? journal.articles : [];
+            for (const art of arts) {
+              const authors = art?.authors || (art?.author ? [art.author] : []);
+              if (authors.some(matchesAuthor)) {
+                list.push(normalizeArticle(art, journal));
+              }
+            }
+          }
+        }
+        // Dedupe by article id
+        const seen = new Set();
+        list = list.filter((art) => {
+          const id = art?.id != null ? String(art.id) : null;
+          if (id && seen.has(id)) return false;
+          if (id) seen.add(id);
+          return true;
+        });
+        if (!cancelled) setArticles(list);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e?.message || "Failed to load articles");
+          setArticles([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [item?.id, item?.firstName, item?.lastName]);
 
   const handleFollow = async () => {
     if (followLoading) return;
     setFollowLoading(true);
     try {
-      if (isFollowing(item.id)) {
-        await removeFollow(item.id);
-      } else {
-        await addFollow(item.id);
-      }
+      if (isFollowing(item.id)) await removeFollow(item.id);
+      else await addFollow(item.id);
     } catch (_e) {
       // Error already logged in context
     } finally {
@@ -66,47 +119,8 @@ const AuthorDetails = ({navigation}) => {
     }
   };
 
-
-  const { loading, error, data } = useQuery(GET_AUTHOR_RESOURCES)
-
-  if (loading) return null;
-  if (error) return `Error! ${error}`;
-
-  const issueData = data?.authors?.filter((author) => author.id === item.id) || []
-
-  const articles = (issueData[0]?.articles || []).map((article) => {
-    // Normalize authors - extract actual author objects from nested structure
-    if (article.authors && Array.isArray(article.authors)) {
-      // Authors array contains objects with nested 'author' property
-      // Extract the actual author objects and normalize avatar/photo
-      article.authors = article.authors
-        .map(authorItem => {
-          const author = authorItem.author || authorItem;
-          if (author) {
-            // Normalize avatar/photo field
-            author.avatar = author.avatar 
-              || author.photo?.url 
-              || (typeof author.photo === 'string' ? author.photo : null);
-          }
-          return author;
-        })
-        .filter(author => author); // Remove any null/undefined
-    } else if (article.author) {
-      // Single author case - normalize avatar/photo
-      const author = article.author;
-      author.avatar = author.avatar 
-        || author.photo?.url 
-        || (typeof author.photo === 'string' ? author.photo : null);
-      article.authors = [author];
-    } else {
-      // No authors at all
-      article.authors = [];
-    }
-    return article;
-  });
-
-    return (
-<ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
+  return (
+<ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         
         <View>
         <Image style={styles.coverImg} source={{uri: item.avatar || 'https://via.placeholder.com/400x400'}} />
@@ -128,13 +142,26 @@ const AuthorDetails = ({navigation}) => {
 
         <View style={styles.detailsContainter}>
         <View>
-        {articles && articles.length > 0 ? (
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <ActivityIndicator size="large" color="#357db5" />
+          </View>
+        ) : error ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>{error}</Text>
+          </View>
+        ) : articles.length > 0 ? (
           articles.map((article, index) => {
-            return (<TouchableOpacity key={article.id || `author-article-${index}`} onPress={() => navigation.navigate ("Article", {item: article})}>
+            const journalLabel = article.journal
+              ? `Issue ${article.journal.issue ?? "N/A"} (${article.journal.year ?? "N/A"})`
+              : article.issueNumber != null
+                ? `Volume ${article.issueNumber}${article.year ? ` (${article.year})` : ""}`
+                : "N/A";
+            return (<TouchableOpacity key={article.id || `author-article-${index}`} onPress={() => navigation.navigate("Article", { item: article })}>
               <View style={styles.articlesContainer}>
               <View style={styles.articleInfo}>
               <Text style={styles.articleTitle}>{article.title}</Text>
-              <Text style={styles.articleAuthor}>in Issue {article.journal?.issue || 'N/A'} ({article.journal?.year || 'N/A'})</Text>
+              <Text style={styles.articleAuthor}>in {journalLabel}</Text>
               </View>
               <View>
                 <Ionicons style={{paddingTop: 15}}
