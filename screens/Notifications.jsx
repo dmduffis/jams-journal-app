@@ -45,8 +45,26 @@ const Notifications = () => {
     }
   };
 
+  const getNotificationLines = (n) => {
+    const authorName = n.authorName ?? n.author?.firstName != null
+      ? [n.author?.firstName, n.author?.lastName].filter(Boolean).join(" ")
+      : null;
+    const articleTitle = n.articleTitle ?? n.body;
+    if (authorName && articleTitle) {
+      return { primary: `${authorName} posted a new article`, secondary: articleTitle };
+    }
+    if (authorName) {
+      return { primary: `${authorName} posted a new article`, secondary: n.body ?? n.title };
+    }
+    if (n.title && n.body) {
+      return { primary: n.title, secondary: n.body };
+    }
+    return { primary: n.title ?? "New article", secondary: null };
+  };
+
   const renderItem = ({ item }) => {
     const isRead = !!item.readAt;
+    const { primary, secondary } = getNotificationLines(item);
     return (
       <TouchableOpacity
         style={[styles.item, isRead && styles.itemRead]}
@@ -54,11 +72,11 @@ const Notifications = () => {
         activeOpacity={0.7}
       >
         <Text style={styles.itemTitle} numberOfLines={2}>
-          {item.title ?? "New article"}
+          {primary}
         </Text>
-        {item.body ? (
+        {secondary ? (
           <Text style={styles.itemBody} numberOfLines={2}>
-            {item.body}
+            {secondary}
           </Text>
         ) : null}
         <Text style={styles.itemDate}>

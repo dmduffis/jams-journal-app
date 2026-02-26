@@ -20,6 +20,7 @@ const DEFAULT_AVATAR =
   "https://flvqnuanthbcwndlibds.supabase.co/storage/v1/object/sign/Images/default_fallback_profile.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kZjI4MDE3NS1iNGExLTQ0ODctYjg1Yi02NmU4M2JiYWVmMzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZXMvZGVmYXVsdF9mYWxsYmFja19wcm9maWxlLnBuZyIsImlhdCI6MTc2NDAwMzU3MywiZXhwIjozMzQwODAzNTczfQ.c4K0LPTW2mHNf8zt_zklvsNJwnLS-WA_3avEBDW_q9Y";
 
 const PREVIEW_NOTIFICATIONS = 3;
+const NOTIFICATIONS_FOR_BADGE = 50;
 const DROPDOWN_WIDTH = 280;
 const HEADER_HEIGHT = 120;
 
@@ -31,6 +32,7 @@ const Header = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const headerBottom = insets.top + HEADER_HEIGHT - 63;
 
   useEffect(() => {
@@ -44,14 +46,22 @@ const Header = () => {
   const fetchNotificationPreview = useCallback(async () => {
     setNotificationsLoading(true);
     try {
-      const list = await getNotifications(PREVIEW_NOTIFICATIONS);
-      setNotifications(Array.isArray(list) ? list : []);
+      const list = await getNotifications(NOTIFICATIONS_FOR_BADGE);
+      const arr = Array.isArray(list) ? list : [];
+      setNotifications(arr.slice(0, PREVIEW_NOTIFICATIONS));
+      const unread = arr.filter((n) => !n.readAt).length;
+      setUnreadCount(unread);
     } catch (_e) {
       setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setNotificationsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (user) fetchNotificationPreview();
+  }, [user, fetchNotificationPreview]);
 
   const openNotifications = () => {
     setProfileOpen(false);
@@ -117,7 +127,16 @@ const Header = () => {
             onPress={openNotifications}
             activeOpacity={0.7}
           >
-            <Ionicons name="notifications-outline" color="black" size={22} />
+            <View>
+              <Ionicons name="notifications-outline" color="black" size={22} />
+              {unreadCount > 0 ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText} numberOfLines={1}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
               style={styles.profileCircle}
@@ -154,18 +173,35 @@ const Header = () => {
             ) : notifications.length === 0 ? (
               <Text style={styles.dropdownEmpty}>No new notifications</Text>
             ) : (
-              notifications.map((n) => (
-                <TouchableOpacity
-                  key={n.id}
-                  style={styles.dropdownItem}
-                  onPress={() => handleNotificationPress(n)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.dropdownItemTitle} numberOfLines={2}>
-                    {n.title ?? "New article"}
-                  </Text>
-                </TouchableOpacity>
-              ))
+              notifications.map((n) => {
+                const authorName = n.authorName ?? (n.author?.firstName != null
+                  ? [n.author?.firstName, n.author?.lastName].filter(Boolean).join(" ")
+                  : null);
+                const articleTitle = n.articleTitle ?? n.body;
+                const primary = authorName && (articleTitle || n.title)
+                  ? `${authorName} posted a new article`
+                  : (n.title ?? "New article");
+                const secondary = articleTitle ?? (authorName ? n.title : null);
+                return (
+                  <TouchableOpacity
+                    key={n.id}
+                    style={styles.dropdownItem}
+                    onPress={() => handleNotificationPress(n)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.dropdownItemTextWrap}>
+                      <Text style={styles.dropdownItemTitle} numberOfLines={1}>
+                        {primary}
+                      </Text>
+                      {secondary ? (
+                        <Text style={styles.dropdownItemSubtitle} numberOfLines={1}>
+                          {secondary}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
             )}
             <TouchableOpacity
               style={styles.dropdownButton}
@@ -240,6 +276,23 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#d9534f",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    fontFamily: "sans_bold",
+    fontSize: 11,
+    color: "#fff",
   },
   profileCircle: {
     width: 32,
@@ -320,11 +373,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 12,
   },
+  dropdownItemTextWrap: {
+    flex: 1,
+  },
   dropdownItemTitle: {
-    fontFamily: "sans_regular",
+    fontFamily: "sans_semibold",
     fontSize: 14,
     color: "#333",
-    flex: 1,
+  },
+  dropdownItemSubtitle: {
+    fontFamily: "sans_regular",
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
   },
   dropdownItemLabel: {
     fontFamily: "sans_medium",

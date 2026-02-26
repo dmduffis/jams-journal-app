@@ -1,24 +1,40 @@
 import { View, StyleSheet, Text, Platform } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { ApolloProvider } from "@apollo/client";
 import client from "./services/ApolloClientSetup";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import BottomTabNavigation from "./navigation/BottomTabNavigation";
 import { useFonts } from "expo-font";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import Constants from "expo-constants";
 import Home from "./screens/Home";
 import AuthorDetails from "./screens/AuthorDetails.jsx";
 import Article from "./screens/Article";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import IssueDetails from "./screens/IssueDetails.jsx";
 import Videos from "./components/VideoSeriesComponent";
 import SeriesDetails from "./screens/SeriesDetails.jsx";
-import Notifications from "./screens/Notifications.jsx";
+import NotificationsScreen from "./screens/Notifications.jsx";
 import UserProfile from "./screens/UserProfile.jsx";
 import { AuthorProvider } from "./context/AuthorContext";
 import { supabase } from "./lib/supabase";
 import { registerPushToken } from "./lib/jamsBackend";
 import Auth from "./components/Auth";
+
+const navigationRef = createNavigationContainerRef();
+
+// Show notifications when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -81,25 +97,70 @@ export default function App() {
     });
   }, []);
 
-  // Optional: register Expo push token with backend when user is logged in
+  // Register Expo push token with backend when user is logged in
   useEffect(() => {
     if (!session?.user?.id) return;
     let mounted = true;
     (async () => {
       try {
-        const Notifications = require("expo-notifications");
-        const { status } = await Notifications.getPermissionsAsync();
-        if (status !== "granted" || !mounted) return;
-        const { data: token } = await Notifications.getExpoPushTokenAsync();
+        if (!Device.isDevice) return;
+        if (Platform.OS === "android") {
+          await Notifications.setNotificationChannelAsync("default", {
+            name: "JAMS notifications",
+            importance: Notifications.AndroidImportance.DEFAULT,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: "#357db5",
+          });
+        }
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== "granted" || !mounted) return;
+        const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+        const options = projectId ? { projectId } : {};
+        const { data: token } = await Notifications.getExpoPushTokenAsync(options);
         if (mounted && token) await registerPushToken(token, Platform.OS);
       } catch (_e) {
-        // expo-notifications not installed or permission denied
+        // expo-notifications / permission denied / no projectId (e.g. Expo Go)
       }
     })();
     return () => {
       mounted = false;
     };
   }, [session?.user?.id]);
+
+  // Handle notification tap: open Article (or Author Details if only authorId)
+  const pendingNotificationData = useRef(null);
+  const tryNavigateFromNotification = useCallback((data) => {
+    if (!data || !navigationRef.isReady()) return;
+    const articleId = data.articleId ?? data.article_id;
+    const authorId = data.authorId ?? data.author_id;
+    if (articleId) {
+      navigationRef.navigate("Article", { item: { id: articleId } });
+    } else if (authorId) {
+      navigationRef.navigate("Author Details", { item: { id: authorId } });
+    }
+  }, []);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response?.notification?.request?.content?.data ?? {};
+      pendingNotificationData.current = data;
+      tryNavigateFromNotification(data);
+    });
+    return () => Notifications.removeNotificationSubscription(subscription);
+  }, [tryNavigateFromNotification]);
+
+  const onNavigationReady = useCallback(() => {
+    onLayoutRootView();
+    if (pendingNotificationData.current) {
+      tryNavigateFromNotification(pendingNotificationData.current);
+      pendingNotificationData.current = null;
+    }
+  }, [tryNavigateFromNotification, onLayoutRootView]);
 
   useEffect(() => {
     async function prepare() {
@@ -138,7 +199,7 @@ export default function App() {
     <AppErrorBoundary>
     <AuthorProvider>
       <ApolloProvider client={client}>
-        <NavigationContainer onReady={onLayoutRootView}>
+        <NavigationContainer ref={navigationRef} onReady={onNavigationReady}>
           <Stack.Navigator>
             <Stack.Screen
               name="Main"
@@ -178,7 +239,7 @@ export default function App() {
 
             <Stack.Screen
               name="Notifications"
-              component={Notifications}
+              component={NotificationsScreen}
               options={{ headerShown: false }}
             />
 

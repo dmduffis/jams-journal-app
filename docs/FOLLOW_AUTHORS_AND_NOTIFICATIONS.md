@@ -112,3 +112,75 @@ Plan for persisting follows and notifying users when a followed author publishes
 | **Push** | Store push token; call Expo Push when creating notification | Request permission, send token to backend, handle incoming push |
 
 If you tell me whether you prefer Railway vs Supabase for follows and whether you want in-app only or also push, I can outline exact API shapes and DB schemas next (or implement the frontend follow persistence first).
+
+---
+
+## Backend: Creating notifications when an article is published
+
+**If users are not seeing notifications after publishing an article**, the backend is not yet creating notification rows. The app only **reads** notifications via `GET /users/:userId/notifications`; it does not create them.
+
+The backend (e.g. Railway `jams-journal-backend`) must do the following whenever a new article is available to users (on publish, on sync, or via a scheduled job).
+
+### 1. When to run
+
+- **Option A – On article create/update**  
+  When your CMS, admin, or sync process adds or publishes an article, call the notification logic right after saving the article (same service or a small internal function).
+
+- **Option B – Cron job**  
+  Every N minutes (e.g. 5–15), fetch articles that were created/updated since the last run (from your DB or from `GET /journals` and then each journal’s articles). For each such article, run the logic below.
+
+### 2. For each new article
+
+1. **Get author ids for the article**  
+   From the article record you have (e.g. from Railway DB or from the journals API). Author ids may be in `article.authors[].author.id` or `article.author.id`. Collect all author ids for that article.
+
+2. **Find followers of those authors**  
+   Query your follows table (e.g. `author_follows` or whatever stores `user_id` + `author_id`).  
+   `SELECT user_id FROM author_follows WHERE author_id IN (list of author ids from step 1)`.
+
+3. **Create one notification per follower**  
+   For each `user_id` from step 2, insert a row into your `notifications` table. The app expects at least:
+   - `user_id`
+   - `article_id` = the new article’s id (so the app can open it)
+   - `title` – who did what (see **Notification copy** below)
+   - `body` – article title (or use `articleTitle`; see below)
+   - `created_at` = now  
+
+   **Notification copy (recommended)** so the in-app notification reads clearly:
+   - **Option A (preferred):** Send structured fields the app can format:
+     - `authorName`: full author name (e.g. `"Boubakar Sanou"` or `firstName + " " + lastName`)
+     - `articleTitle`: the article’s title (e.g. `"Shalom: Health, Healing, and Wholeness in Biblical Perspective"`)
+     - The app will display: **"[Author name] posted a new article"** and below it the article title.
+   - **Option B:** Send pre-formatted text:
+     - `title`: e.g. `"Boubakar Sanou posted a new article"`
+     - `body`: the article’s title  
+   The app also accepts `author: { firstName, lastName }` instead of `authorName`.  
+   Response shape: `id`, `title`, `body`, `articleId`, `readAt`, `createdAt` (see `screens/Notifications.jsx` and `lib/jamsBackend.js`).
+
+4. **Optional – push**  
+   If you store push tokens per user, for each notification you can also call the Expo Push API so the user gets a device notification.
+
+### 3. Example (pseudo-code)
+
+```text
+function onArticlePublished(article) {
+  const authorIds = getAuthorIdsFromArticle(article);  // e.g. [1, 4, 7]
+  const followerUserIds = db.query(
+    'SELECT user_id FROM author_follows WHERE author_id IN (?)', authorIds
+  );
+  for (const userId of followerUserIds) {
+    db.insert('notifications', {
+      user_id: userId,
+      article_id: article.id,
+      title: 'New article',
+      body: article.title,
+      created_at: new Date(),
+    });
+    // optionally: send Expo push to userId
+  }
+}
+```
+
+### 4. Author id format
+
+Use the **same** author id the app uses when following (the `id` from `GET /authors` or from the author object in journal articles). Your follows table stores that id; when you resolve “followers of this article’s authors”, match on that same id.
