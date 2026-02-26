@@ -14,7 +14,6 @@ const AuthorDetails = () => {
   const { item } = route.params;
 
   const { isFollowing, addFollow, removeFollow } = useContext(AuthorContext);
-  const [followLoading, setFollowLoading] = useState(false);
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -108,17 +107,9 @@ const AuthorDetails = () => {
     return () => { cancelled = true; };
   }, [item?.id, item?.firstName, item?.lastName]);
 
-  const handleFollow = async () => {
-    if (followLoading) return;
-    setFollowLoading(true);
-    try {
-      if (isFollowing(item.id)) await removeFollow(item.id);
-      else await addFollow(item.id);
-    } catch (_e) {
-      // Error already logged in context
-    } finally {
-      setFollowLoading(false);
-    }
+  const handleFollow = () => {
+    if (isFollowing(item.id)) removeFollow(item.id);
+    else addFollow(item.id);
   };
 
   return (
@@ -138,11 +129,10 @@ const AuthorDetails = () => {
         <TouchableOpacity
           onPress={handleFollow}
           style={isFollowing(item.id) ? styles.followedBtn : styles.followBtn}
-          disabled={followLoading}
         >
           <View style={styles.follow}>
             <Text style={{ fontFamily: 'sans_bold', fontSize: 15, color: isFollowing(item.id) ? '#007caf' : 'white' }}>
-              {followLoading ? "…" : isFollowing(item.id) ? "Following" : "Follow"}
+              {isFollowing(item.id) ? "Following" : "Follow"}
             </Text>
           </View>
         </TouchableOpacity>

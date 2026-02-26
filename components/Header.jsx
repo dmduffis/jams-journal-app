@@ -116,6 +116,28 @@ const Header = () => {
   const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null;
   const initial = user?.email?.[0]?.toUpperCase() ?? "?";
 
+  const notificationTimeAgo = (isoString) => {
+    if (!isoString) return "";
+    try {
+      const d = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - d;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHrs = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return `${diffMins} min${diffMins === 1 ? "" : "s"} ago`;
+      if (diffHrs < 24) return `${diffHrs} hr${diffHrs === 1 ? "" : "s"} ago`;
+      if (diffDays === 1) return "Yesterday";
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return d.getFullYear() !== now.getFullYear()
+        ? d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+        : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    } catch (_e) {
+      return "";
+    }
+  };
+
   return (
     <>
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -176,12 +198,8 @@ const Header = () => {
               notifications.map((n) => {
                 const authorName = n.authorName ?? (n.author?.firstName != null
                   ? [n.author?.firstName, n.author?.lastName].filter(Boolean).join(" ")
-                  : null);
-                const articleTitle = n.articleTitle ?? n.body;
-                const primary = authorName && (articleTitle || n.title)
-                  ? `${authorName} posted a new article`
-                  : (n.title ?? "New article");
-                const secondary = articleTitle ?? (authorName ? n.title : null);
+                  : null) ?? (n.title ?? "New notification");
+                const articleTitle = n.articleTitle ?? n.body ?? null;
                 return (
                   <TouchableOpacity
                     key={n.id}
@@ -190,14 +208,17 @@ const Header = () => {
                     activeOpacity={0.7}
                   >
                     <View style={styles.dropdownItemTextWrap}>
-                      <Text style={styles.dropdownItemTitle} numberOfLines={1}>
-                        {primary}
+                      <Text style={styles.dropdownItemTitle}>
+                        {authorName}
                       </Text>
-                      {secondary ? (
-                        <Text style={styles.dropdownItemSubtitle} numberOfLines={1}>
-                          {secondary}
+                      {articleTitle ? (
+                        <Text style={styles.dropdownItemArticleTitle}>
+                          {articleTitle}
                         </Text>
                       ) : null}
+                      <Text style={styles.dropdownItemSubtitle}>
+                        {notificationTimeAgo(n.createdAt)}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -378,12 +399,18 @@ const styles = StyleSheet.create({
   },
   dropdownItemTitle: {
     fontFamily: "sans_semibold",
-    fontSize: 14,
+    fontSize: 12,
     color: "#333",
+  },
+  dropdownItemArticleTitle: {
+    fontFamily: "sans_regular",
+    fontSize: 11,
+    color: "#555",
+    marginTop: 2,
   },
   dropdownItemSubtitle: {
     fontFamily: "sans_regular",
-    fontSize: 12,
+    fontSize: 11,
     color: "#666",
     marginTop: 2,
   },

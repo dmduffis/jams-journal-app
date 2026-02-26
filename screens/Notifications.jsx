@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, FlatList, ActivityIndicator, Image } from "react-native";
 import React, { useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -45,43 +45,76 @@ const Notifications = () => {
     }
   };
 
-  const getNotificationLines = (n) => {
-    const authorName = n.authorName ?? n.author?.firstName != null
-      ? [n.author?.firstName, n.author?.lastName].filter(Boolean).join(" ")
-      : null;
-    const articleTitle = n.articleTitle ?? n.body;
-    if (authorName && articleTitle) {
-      return { primary: `${authorName} posted a new article`, secondary: articleTitle };
+  const getNotificationDisplay = (n) => {
+    const authorName =
+      n.authorName ??
+      (n.author?.firstName != null
+        ? [n.author?.firstName, n.author?.lastName].filter(Boolean).join(" ")
+        : null);
+    const authorAvatar = n.authorAvatar ?? n.author?.avatar ?? null;
+    const articleTitle = n.articleTitle ?? n.body ?? null;
+    const primary = authorName ? `${authorName} posted a new article` : (n.title ?? "New article");
+    return { authorName, authorAvatar, articleTitle, primary };
+  };
+
+  const timeAgo = (isoString) => {
+    if (!isoString) return "";
+    try {
+      const d = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - d;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHrs = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return `${diffMins} min${diffMins === 1 ? "" : "s"} ago`;
+      if (diffHrs < 24) return `${diffHrs} hr${diffHrs === 1 ? "" : "s"} ago`;
+      if (diffDays === 1) return "Yesterday";
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return d.getFullYear() !== now.getFullYear()
+        ? d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+        : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    } catch (_e) {
+      return "";
     }
-    if (authorName) {
-      return { primary: `${authorName} posted a new article`, secondary: n.body ?? n.title };
-    }
-    if (n.title && n.body) {
-      return { primary: n.title, secondary: n.body };
-    }
-    return { primary: n.title ?? "New article", secondary: null };
   };
 
   const renderItem = ({ item }) => {
     const isRead = !!item.readAt;
-    const { primary, secondary } = getNotificationLines(item);
+    const { authorName, authorAvatar, articleTitle, primary } = getNotificationDisplay(item);
+    const initial = authorName ? authorName.trim().split(/\s+/).map((s) => s[0]).join("").slice(0, 2).toUpperCase() : "?";
     return (
       <TouchableOpacity
         style={[styles.item, isRead && styles.itemRead]}
         onPress={() => onPressNotification(item)}
         activeOpacity={0.7}
       >
-        <Text style={styles.itemTitle} numberOfLines={2}>
-          {primary}
-        </Text>
-        {secondary ? (
-          <Text style={styles.itemBody} numberOfLines={2}>
-            {secondary}
-          </Text>
-        ) : null}
-        <Text style={styles.itemDate}>
-          {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}
-        </Text>
+        <View style={styles.itemAvatar}>
+          {authorAvatar ? (
+            <Image source={{ uri: authorAvatar }} style={styles.itemAvatarImage} />
+          ) : (
+            <View style={styles.itemAvatarPlaceholder}>
+              <Text style={styles.itemAvatarInitial}>{initial}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.itemContent}>
+          {authorName ? (
+            <Text style={styles.itemAuthor}>
+              {authorName}
+            </Text>
+          ) : null}
+          {articleTitle ? (
+            <Text style={styles.itemTitle}>
+              {articleTitle}
+            </Text>
+          ) : (
+            <Text style={styles.itemTitle}>
+              {primary}
+            </Text>
+          )}
+          <Text style={styles.itemDate}>{timeAgo(item.createdAt)}</Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -171,6 +204,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   item: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     paddingVertical: 14,
     paddingHorizontal: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -179,10 +214,41 @@ const styles = StyleSheet.create({
   itemRead: {
     opacity: 0.7,
   },
-  itemTitle: {
+  itemAvatar: {
+    marginRight: 12,
+  },
+  itemAvatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  itemAvatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#357db5",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  itemAvatarInitial: {
     fontFamily: "sans_semibold",
     fontSize: 16,
+    color: "#fff",
+  },
+  itemContent: {
+    flex: 1,
+  },
+  itemAuthor: {
+    fontFamily: "sans_semibold",
+    fontSize: 13,
     color: "#333",
+    marginBottom: 2,
+  },
+  itemTitle: {
+    fontFamily: "sans_regular",
+    fontSize: 13,
+    color: "#333",
+    marginBottom: 2,
   },
   itemBody: {
     fontFamily: "sans_regular",
@@ -192,7 +258,7 @@ const styles = StyleSheet.create({
   },
   itemDate: {
     fontFamily: "sans_regular",
-    fontSize: 12,
+    fontSize: 11,
     color: "#999",
     marginTop: 4,
   },

@@ -8,22 +8,10 @@ const Author = ({ item }) => {
   const navigation = useNavigation();
   const { isFollowing, addFollow, removeFollow } = useContext(AuthorContext);
   const [imageError, setImageError] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
 
-  const handleFollow = async () => {
-    if (followLoading) return;
-    setFollowLoading(true);
-    try {
-      if (isFollowing(item.id)) {
-        await removeFollow(item.id);
-      } else {
-        await addFollow(item.id);
-      }
-    } catch (_e) {
-      // Error already logged in context
-    } finally {
-      setFollowLoading(false);
-    }
+  const handleFollow = () => {
+    if (isFollowing(item.id)) removeFollow(item.id);
+    else addFollow(item.id);
   };
 
   // Default placeholder from Supabase storage
@@ -48,10 +36,9 @@ const Author = ({ item }) => {
       <TouchableOpacity
         style={isFollowing(item.id) ? styles.followedBtn : styles.followBtn}
         onPress={handleFollow}
-        disabled={followLoading}
       >
         <Text style={isFollowing(item.id) ? styles.followedTxt : styles.followTxt}>
-          {followLoading ? "…" : isFollowing(item.id) ? "Following" : "Follow"}
+          {isFollowing(item.id) ? "Following" : "Follow"}
         </Text>
       </TouchableOpacity>
     </View>

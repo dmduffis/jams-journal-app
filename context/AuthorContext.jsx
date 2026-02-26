@@ -39,23 +39,23 @@ const AuthorProvider = ({ children }) => {
 
   const addFollow = useCallback(async (authorId) => {
     const id = String(authorId);
+    setFollowedAuthors((prev) => (prev.includes(id) ? prev : [...prev, id]));
     try {
       await apiAddFollow(id);
-      setFollowedAuthors((prev) => (prev.includes(id) ? prev : [...prev, id]));
     } catch (e) {
       console.warn("[AuthorContext] addFollow failed:", e?.message ?? e);
-      throw e;
+      setFollowedAuthors((prev) => prev.filter((x) => x !== id));
     }
   }, []);
 
   const removeFollow = useCallback(async (authorId) => {
     const id = String(authorId);
+    setFollowedAuthors((prev) => prev.filter((x) => x !== id));
     try {
       await apiRemoveFollow(id);
-      setFollowedAuthors((prev) => prev.filter((x) => x !== id));
     } catch (e) {
       console.warn("[AuthorContext] removeFollow failed:", e?.message ?? e);
-      throw e;
+      setFollowedAuthors((prev) => (prev.includes(id) ? prev : [...prev, id]));
     }
   }, []);
 
