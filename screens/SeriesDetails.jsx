@@ -1,8 +1,8 @@
-import { Text, StyleSheet, View, Image, ScrollView, TouchableOpacity} from 'react-native'
-import React, { Component, useState } from 'react'
-import { useRoute } from '@react-navigation/native'
+import { Text, StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
+import { useRoute, useNavigation } from '@react-navigation/native'
+import { Ionicons } from '@expo/vector-icons'
 import { useQuery, gql } from '@apollo/client';
-import ArticleListItem from '../components/ArticleListItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import YoutubeIframe from 'react-native-youtube-iframe';
 import VideoListItem from '../components/VideoListItem';
@@ -28,35 +28,37 @@ const GET_SERIES_DETAILS = gql`{
 `
 
 
-const SeriesDetails = ({navigation}) => {
+const SeriesDetails = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { item } = route.params;
 
-const route = useRoute({navigation});
-const { item } = route.params;
+  const [playing, setPlaying] = useState(false);
+  const [videoID, setVideoID] = useState(null);
 
+  const { loading, error, data } = useQuery(GET_SERIES_DETAILS);
 
-const [playing, setPlaying] = useState(false);
+  if (loading) return null;
+  if (error) return `Error! ${error}`;
 
+  const seriesData = data.seriesies.filter((series) => series.id === item.id);
+  const videos = seriesData[0].videos;
+  const currentVideoId = videoID ?? videos[0]?.youtubeId;
 
-const { loading, error, data } = useQuery(GET_SERIES_DETAILS)
-
-if (loading) return null;
-if (error) return `Error! ${error}`;
-
-const seriesData = data.seriesies.filter((series) => series.id === item.id)
-
-const videos = seriesData[0].videos
-
-const [videoID, setVideoID] = useState(videos[0].youtubeId);
-
-    return (
-<SafeAreaView>
-<ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        
+  return (
+    <SafeAreaView style={styles.screen} edges={['top']}>
+      <View style={styles.backRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="chevron-back" size={28} color="#357db5" />
+          <Text style={styles.backLabel}>Back</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View>
             <YoutubeIframe 
               height={220}
               play={playing}
-              videoId={videoID}
+              videoId={currentVideoId}
             />
         </View>
 
@@ -69,24 +71,47 @@ const [videoID, setVideoID] = useState(videos[0].youtubeId);
         {videos.map((item) => {
           return (
         <TouchableOpacity onPress={() => {
-            videoID === item.id? {}: setVideoID(item.youtubeId); setPlaying(true)}} key={item.id}>
-          <VideoListItem item={item} videoID={videoID}/>
+            currentVideoId === item.youtubeId ? {} : setVideoID(item.youtubeId); setPlaying(true);
+          }} key={item.id}>
+          <VideoListItem item={item} videoID={currentVideoId}/>
         </TouchableOpacity>
         ) 
         })}
     </View>
     </View>
       </ScrollView>
-      </SafeAreaView>
-    )
+    </SafeAreaView>
+  );
 }
 
 export default SeriesDetails
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#eee',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backLabel: {
+    fontFamily: 'sans_semibold',
+    fontSize: 17,
+    color: '#357db5',
+    marginLeft: 2,
+  },
   container: {
-    display: 'flex',
-    height: '100%'
+    flex: 1,
   },
   detailsContainer: {
     height: '100%',

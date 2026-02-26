@@ -70,11 +70,14 @@ const Notifications = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <TouchableOpacity style={styles.backRow} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color="#357db5" />
-        <Text style={styles.backText}>Back</Text>
-      </TouchableOpacity>
-      <Text style={styles.title}>Notifications</Text>
+      <View style={styles.backRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="chevron-back" size={28} color="#357db5" />
+          <Text style={styles.backLabel}>Back</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.content}>
+        <Text style={styles.title}>Notifications</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#357db5" style={styles.loader} />
@@ -91,6 +94,7 @@ const Notifications = () => {
           showsVerticalScrollIndicator={false}
         />
       )}
+      </View>
     </SafeAreaView>
   );
 };
@@ -101,18 +105,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 20,
   },
   backRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    backgroundColor: "#fff",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#eee",
   },
-  backText: {
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backLabel: {
     fontFamily: "sans_semibold",
-    fontSize: 16,
+    fontSize: 17,
     color: "#357db5",
-    marginLeft: 4,
+    marginLeft: 2,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   title: {
     fontFamily: "sans_bold",

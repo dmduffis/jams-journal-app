@@ -3,12 +3,14 @@ import React, { useState, useEffect } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useContext } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthorContext } from "../context/AuthorContext";
 import { JAMS_BACKEND_BASE_URL } from "../lib/jamsBackend";
 
 const AuthorDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const { item } = route.params;
 
   const { isFollowing, addFollow, removeFollow } = useContext(AuthorContext);
@@ -120,8 +122,14 @@ const AuthorDetails = () => {
   };
 
   return (
-<ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        
+    <View style={styles.screen}>
+      <View style={[styles.backRow, { paddingTop: insets.top + 2, paddingBottom: 8 }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="chevron-back" size={28} color="#357db5" />
+          <Text style={styles.backLabel}>Back</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View>
         <Image style={styles.coverImg} source={{uri: item.avatar || 'https://via.placeholder.com/400x400'}} />
         <View style={styles.issueTitleContainer}>
@@ -179,19 +187,40 @@ const AuthorDetails = () => {
             <Text style={styles.emptySubtext}>Check back soon for new content!</Text>
           </View>
         )}
-            
-          
-    </View>
+            </View>
     </View>
       </ScrollView>
-    )
+    </View>
+  );
 }
 
 export default AuthorDetails
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  backRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    backgroundColor: "#fff",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#eee",
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backLabel: {
+    fontFamily: "sans_semibold",
+    fontSize: 17,
+    color: "#357db5",
+    marginLeft: 2,
+  },
   container: {
-    paddingTop: 50,
+    paddingTop: 24,
     paddingBottom: 50,
   },
   coverImg: {
@@ -199,8 +228,8 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     alignSelf: 'center',
-    marginTop: 75,
-},
+    marginTop: 20,
+  },
   detailsContainter: {
     height: '100%',
     padding: 30,

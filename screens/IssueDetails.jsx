@@ -1,12 +1,16 @@
-import { Text, StyleSheet, View, FlatList, SafeAreaView, TouchableOpacity, Image, ScrollView} from 'react-native'
+import { Text, StyleSheet, View, TouchableOpacity, Image, ScrollView } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { useRoute } from '@react-navigation/native'
+import { useRoute, useNavigation } from '@react-navigation/native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 import ArticleListItem from '../components/ArticleListItem';
 import { JAMS_BACKEND_BASE_URL } from '../lib/jamsBackend';
 
-const IssueDetails = ({navigation}) => {
+const IssueDetails = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const insets = useSafeAreaInsets();
   const [issueData, setIssueData] = useState(null);
-  const route = useRoute({navigation});
   const { item } = route.params;
 
   const getIssueDetails = async () => {
@@ -63,8 +67,14 @@ const IssueDetails = ({navigation}) => {
     });
 
     return (
-<ScrollView styl={styles.container} showsVerticalScrollIndicator={false}>
-        
+      <View style={styles.screen}>
+        <View style={[styles.backRow, { paddingTop: insets.top + 2, paddingBottom: 8 }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <Ionicons name="chevron-back" size={28} color="#357db5" />
+            <Text style={styles.backLabel}>Back</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View>
         <Image style={styles.coverImg} source={{uri: item.coverPhoto || 'https://via.placeholder.com/400x600'}} />
         <View style={styles.issueTitleContainer}>
@@ -90,14 +100,37 @@ const IssueDetails = ({navigation}) => {
     </View>
     </View>
       </ScrollView>
-    )
+      </View>
+    );
 }
 
 export default IssueDetails
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#eee',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backLabel: {
+    fontFamily: 'sans_semibold',
+    fontSize: 17,
+    color: '#357db5',
+    marginLeft: 2,
+  },
   container: {
-    paddingTop: 50,
+    paddingTop: 16,
     paddingBottom: 50,
   },
   coverImg: {
@@ -105,8 +138,8 @@ const styles = StyleSheet.create({
     height: 225,
     borderRadius: 5,
     alignSelf: 'center',
-    marginTop: 85,
-},
+    marginTop: 20,
+  },
   detailsContainter: {
     height: '100%',
     padding: 30,

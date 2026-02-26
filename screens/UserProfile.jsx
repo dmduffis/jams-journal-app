@@ -90,6 +90,12 @@ const UserProfile = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.backRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="chevron-back" size={28} color="#357db5" />
+          <Text style={styles.backLabel}>Back</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -148,6 +154,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  backRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    backgroundColor: "#fff",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#eee",
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backLabel: {
+    fontFamily: "sans_semibold",
+    fontSize: 17,
+    color: "#357db5",
+    marginLeft: 2,
   },
   scrollView: {
     flex: 1,

@@ -1,9 +1,10 @@
-import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions } from 'react-native'
+import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import RenderHtml from 'react-native-render-html';
 import Markdown from 'react-native-markdown-display';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import ArticleAuthors from '../components/ArticleAuthors';
 
 // Define system fonts for HTML rendering
@@ -125,6 +126,7 @@ const tagsStyles = {
 
 const Article = () => {
   const [articleData, setArticleData] = useState(null);
+  const navigation = useNavigation();
   const routes = useRoute();
   const { item } = routes.params;
   const { width } = useWindowDimensions();
@@ -241,6 +243,12 @@ const Article = () => {
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarFill, { height: insets.top }]} />
+      <View style={styles.backRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="chevron-back" size={28} color="#357db5" />
+          <Text style={styles.backLabel}>Back</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       <Text style={styles.title}>{articleData.title}</Text>
     
@@ -367,6 +375,26 @@ const styles = StyleSheet.create({
   statusBarFill: {
     backgroundColor: '#fff',
     width: '100%',
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 4,
+    paddingBottom: 10,
+    paddingHorizontal: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#eee',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backLabel: {
+    fontFamily: 'sans_semibold',
+    fontSize: 17,
+    color: '#357db5',
+    marginLeft: 2,
   },
   container: {
     flex: 1,
