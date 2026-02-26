@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, Platform } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { ApolloProvider } from "@apollo/client";
 import client from "./services/ApolloClientSetup";
@@ -13,8 +13,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import IssueDetails from "./screens/IssueDetails.jsx";
 import Videos from "./components/VideoSeriesComponent";
 import SeriesDetails from "./screens/SeriesDetails.jsx";
+import Notifications from "./screens/Notifications.jsx";
 import { AuthorProvider } from "./context/AuthorContext";
 import { supabase } from "./lib/supabase";
+import { registerPushToken } from "./lib/jamsBackend";
 import Auth from "./components/Auth";
 
 SplashScreen.preventAutoHideAsync();
@@ -77,6 +79,26 @@ export default function App() {
       setSession(session);
     });
   }, []);
+
+  // Optional: register Expo push token with backend when user is logged in
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const Notifications = require("expo-notifications");
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status !== "granted" || !mounted) return;
+        const { data: token } = await Notifications.getExpoPushTokenAsync();
+        if (mounted && token) await registerPushToken(token, Platform.OS);
+      } catch (_e) {
+        // expo-notifications not installed or permission denied
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [session?.user?.id]);
 
   useEffect(() => {
     async function prepare() {
@@ -150,6 +172,12 @@ export default function App() {
             <Stack.Screen
               name="Series Details"
               component={SeriesDetails}
+              options={{ headerShown: false }}
+            />
+
+            <Stack.Screen
+              name="Notifications"
+              component={Notifications}
               options={{ headerShown: false }}
             />
           </Stack.Navigator>

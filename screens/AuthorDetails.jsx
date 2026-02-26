@@ -47,26 +47,24 @@ const AuthorDetails = ({navigation}) => {
   
   const { item } = route.params;
 
-  const {followedAuthors, setFollowedAuthors} = useContext(AuthorContext);
+  const { isFollowing, addFollow, removeFollow } = useContext(AuthorContext);
+  const [followLoading, setFollowLoading] = useState(false);
 
-  const deleteAuthor = () => {
-    let newAuthorList = followedAuthors.filter((id) => {
-        return id !== item.id
-      })
-    setFollowedAuthors(newAuthorList);
-  }
-
-  const addAuthor = () => {
-    setFollowedAuthors(prevAuthors => [...prevAuthors, item.id])
-  }
-
-  const handleFollow = () => {
-    if (followedAuthors.includes(item.id)) {
-      deleteAuthor();
-    } else {
-      addAuthor();
+  const handleFollow = async () => {
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing(item.id)) {
+        await removeFollow(item.id);
+      } else {
+        await addFollow(item.id);
+      }
+    } catch (_e) {
+      // Error already logged in context
+    } finally {
+      setFollowLoading(false);
     }
-  }
+  };
 
 
   const { loading, error, data } = useQuery(GET_AUTHOR_RESOURCES)
@@ -115,16 +113,17 @@ const AuthorDetails = ({navigation}) => {
         <View style={styles.issueTitleContainer}>
         <Text style={styles.issueTitle}>{item.firstName} {item.lastName}</Text>
         </View>
-        <TouchableOpacity 
-      onPress = {() => handleFollow()}
-      style={followedAuthors.includes(item.id) ? styles.followedBtn : styles.followBtn}>
-      <View style={styles.follow}>
-        <Text style={{fontFamily: 'sans_bold',
-      fontSize: 15, color: followedAuthors.includes(item.id)? '#007caf' : 'white'}}>{ followedAuthors.includes(item.id)? 'Following' : 'Follow' }
-      </Text>
-      </View>
-
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleFollow}
+          style={isFollowing(item.id) ? styles.followedBtn : styles.followBtn}
+          disabled={followLoading}
+        >
+          <View style={styles.follow}>
+            <Text style={{ fontFamily: 'sans_bold', fontSize: 15, color: isFollowing(item.id) ? '#007caf' : 'white' }}>
+              {followLoading ? "…" : isFollowing(item.id) ? "Following" : "Follow"}
+            </Text>
+          </View>
+        </TouchableOpacity>
         </View>
 
         <View style={styles.detailsContainter}>
