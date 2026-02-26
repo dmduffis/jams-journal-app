@@ -32,16 +32,13 @@ const TopArticlesItem = ({ item, noData, dataExists, idx }) => {
     getArticleBookmarksCount(articleId).then((n) => setSaveCount(n));
   }, [articleId]);
 
-  const displaySaveCount = Math.max(saveCount, saved ? 1 : 0);
-
   const onPressBookmark = async () => {
     if (articleId == null) return;
-    const wasSaved = saved;
     const meta = { title: item?.title, slug: item?.slug, authors: item?.authors };
     try {
       await toggleBookmark(articleId, meta);
-      setSaveCount((prev) => (wasSaved ? Math.max(0, prev - 1) : prev + 1));
-      getArticleBookmarksCount(articleId).then((n) => setSaveCount(n));
+      const n = await getArticleBookmarksCount(articleId);
+      setSaveCount(typeof n === "number" ? n : 0);
     } catch (e) {
       const msg = e?.message ?? "Could not save article";
       Alert.alert("Bookmark", msg === "Not authenticated" ? "Sign in to save articles." : msg);
@@ -91,7 +88,7 @@ const TopArticlesItem = ({ item, noData, dataExists, idx }) => {
               >
                 <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={20} color="#357db5" />
               </TouchableOpacity>
-              {displaySaveCount > 0 && <Text style={styles.iconCount}>{formatCount(displaySaveCount)}</Text>}
+              {saveCount > 0 && <Text style={styles.iconCount}>{formatCount(saveCount)}</Text>}
             </View>
           </View>
         )}
