@@ -1,4 +1,8 @@
-import React, { createContext, useCallback, useEffect, useRef } from "react";
+import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
+import { getNotifications } from "../lib/jamsBackend";
+
+const PREVIEW_NOTIFICATIONS = 3;
+const NOTIFICATIONS_FOR_BADGE = 50;
 
 const NotificationRefreshContext = createContext(null);
 
@@ -9,19 +13,31 @@ const NotificationRefreshContext = createContext(null);
 export const notificationRefetchTriggerRef = { current: null };
 
 /**
- * Provides a way to trigger "refresh in-app notifications" from anywhere (e.g. when
- * a push notification is received). Consumers (e.g. Header) register their refetch
- * function; when triggerRefetch() is called (or the ref above), the registered refetch runs.
+ * Holds notification preview and unread count in one place so all Headers (every tab)
+ * show the same badge. Refetch when: push received, user logs in, or dropdown open.
  */
 export const NotificationRefreshProvider = ({ children }) => {
-  const refetchRef = useRef(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const fetchIdRef = useRef(0);
 
-  const registerRefetch = useCallback((fn) => {
-    refetchRef.current = fn;
-  }, []);
-
-  const triggerRefetch = useCallback(() => {
-    refetchRef.current?.();
+  const triggerRefetch = useCallback(async () => {
+    const thisFetchId = ++fetchIdRef.current;
+    setLoading(true);
+    try {
+      const list = await getNotifications(NOTIFICATIONS_FOR_BADGE);
+      if (thisFetchId !== fetchIdRef.current) return;
+      const arr = Array.isArray(list) ? list : [];
+      setNotifications(arr.slice(0, PREVIEW_NOTIFICATIONS));
+      setUnreadCount(arr.filter((n) => !n.readAt).length);
+    } catch (_e) {
+      if (thisFetchId !== fetchIdRef.current) return;
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      if (thisFetchId === fetchIdRef.current) setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -31,7 +47,7 @@ export const NotificationRefreshProvider = ({ children }) => {
     };
   }, [triggerRefetch]);
 
-  const value = { registerRefetch, triggerRefetch };
+  const value = { notifications, unreadCount, loading, triggerRefetch };
 
   return (
     <NotificationRefreshContext.Provider value={value}>
