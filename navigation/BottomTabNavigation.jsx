@@ -4,8 +4,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Home from '../screens/Home'
 import Search from '../screens/Search'
 import Chat from '../screens/Chat'
-import UserProfile from '../screens/UserProfile'
-import Videos from '../screens/Videos';
+import Videos from '../screens/Videos'
+import Browse from '../screens/Browse';
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -67,6 +67,19 @@ export default function BottomTabNavigation() {
             }}/>
 
         <Tab.Screen
+        name="Browse"
+        component={Browse}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <Ionicons
+              name="library"
+              size={24}
+              color={focused ? "#016180" : "gray"}
+            />
+          ),
+        }}/>
+
+        <Tab.Screen
                 name="Videos"
                 component={Videos}
                 options = {{
@@ -77,19 +90,6 @@ export default function BottomTabNavigation() {
                         color={focused? '#016180': 'gray'} />
                     }
                     }}/>
-        
-        <Tab.Screen
-                name="Profile"
-                component={UserProfile}
-                options = {{
-                    tabBarIcon: ({focused}) => {
-                        return <Ionicons 
-                        name={focused? "person" : "person-outline"} 
-                        size={24}
-                        color={focused? '#016180': 'gray'} />
-                    }
-                    }}/>
-            
       </Tab.Navigator>
     )
   }

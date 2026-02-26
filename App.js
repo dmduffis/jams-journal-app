@@ -14,6 +14,7 @@ import IssueDetails from "./screens/IssueDetails.jsx";
 import Videos from "./components/VideoSeriesComponent";
 import SeriesDetails from "./screens/SeriesDetails.jsx";
 import Notifications from "./screens/Notifications.jsx";
+import UserProfile from "./screens/UserProfile.jsx";
 import { AuthorProvider } from "./context/AuthorContext";
 import { supabase } from "./lib/supabase";
 import { registerPushToken } from "./lib/jamsBackend";
@@ -178,6 +179,12 @@ export default function App() {
             <Stack.Screen
               name="Notifications"
               component={Notifications}
+              options={{ headerShown: false }}
+            />
+
+            <Stack.Screen
+              name="Profile"
+              component={UserProfile}
               options={{ headerShown: false }}
             />
           </Stack.Navigator>

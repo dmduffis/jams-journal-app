@@ -38,7 +38,7 @@ const Header = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.profileCircle}
-          onPress={() => navigation.navigate("Main", { screen: "Profile" })}
+          onPress={() => navigation.navigate("Profile")}
           activeOpacity={0.8}
         >
           {avatarUrl ? (
