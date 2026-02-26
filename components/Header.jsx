@@ -13,7 +13,7 @@ import {
 import React, { useState, useEffect } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { supabase } from "../lib/supabase";
 import { markNotificationRead } from "../lib/jamsBackend";
 import { useNotificationRefresh } from "../context/NotificationRefreshContext";
@@ -44,6 +44,13 @@ const Header = () => {
   useEffect(() => {
     if (user) triggerRefetch();
   }, [user, triggerRefetch]);
+
+  // Refetch when this tab gains focus so badge is correct without opening dropdown
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) triggerRefetch();
+    }, [user, triggerRefetch])
+  );
 
   const openNotifications = () => {
     setProfileOpen(false);
