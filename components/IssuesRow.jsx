@@ -1,8 +1,11 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native'
+import { FlatList, StyleSheet, Text, View, TouchableOpacity } from 'react-native'
 import React, { useState, useEffect } from 'react'
+import { useNavigation } from '@react-navigation/native'
+import { Ionicons } from '@expo/vector-icons'
 import Issue from './Issue';
 
 const IssuesRow = () => {
+  const navigation = useNavigation();
   const [issueData, setIssueData] = useState([]);
 
   const getIssueData = async () => {
@@ -30,7 +33,17 @@ const IssuesRow = () => {
 
   return (
     <View style={styles.container}>
-    <Text style={styles.sectionTitle}>Recent Issues</Text>
+    <View style={styles.titleRow}>
+      <Text style={styles.sectionTitle}>Recent Issues</Text>
+      <TouchableOpacity
+        style={styles.seeAllButton}
+        onPress={() => navigation.navigate('Browse')}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.seeAllText}>See all</Text>
+        <Ionicons name="chevron-forward" size={18} color="#357db5" />
+      </TouchableOpacity>
+    </View>
     <FlatList
     data={issueData}
     keyExtractor={item => item.id}
@@ -55,10 +68,27 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 30,
         borderBottomLeftRadius: 30,
     },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
     sectionTitle: {
       fontFamily: 'sans_semibold',
       fontSize: 22,
-      marginBottom: 20,
       color: '#357db5',
-    }
+    },
+    seeAllButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 4,
+      paddingHorizontal: 4,
+    },
+    seeAllText: {
+      fontFamily: 'sans_semibold',
+      fontSize: 14,
+      color: '#357db5',
+      marginRight: 2,
+    },
 })

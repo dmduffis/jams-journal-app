@@ -18,7 +18,10 @@ import Videos from "./components/VideoSeriesComponent";
 import SeriesDetails from "./screens/SeriesDetails.jsx";
 import NotificationsScreen from "./screens/Notifications.jsx";
 import UserProfile from "./screens/UserProfile.jsx";
+import Bookmarks from "./screens/Bookmarks.jsx";
 import { AuthorProvider } from "./context/AuthorContext";
+import { BookmarkProvider } from "./context/BookmarkContext";
+import { LikeProvider } from "./context/LikeContext";
 import { NotificationRefreshProvider, notificationRefetchTriggerRef } from "./context/NotificationRefreshContext";
 import { supabase } from "./lib/supabase";
 import { registerPushToken } from "./lib/jamsBackend";
@@ -209,6 +212,8 @@ export default function App() {
   return (
     <AppErrorBoundary>
     <AuthorProvider>
+      <BookmarkProvider>
+      <LikeProvider>
       <NotificationRefreshProvider>
       <ApolloProvider client={client}>
         <NavigationContainer ref={navigationRef} onReady={onNavigationReady}>
@@ -260,10 +265,18 @@ export default function App() {
               component={UserProfile}
               options={{ headerShown: false }}
             />
+
+            <Stack.Screen
+              name="Bookmarks"
+              component={Bookmarks}
+              options={{ headerShown: false }}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </ApolloProvider>
       </NotificationRefreshProvider>
+      </LikeProvider>
+      </BookmarkProvider>
     </AuthorProvider>
     </AppErrorBoundary>
   );

@@ -6,6 +6,10 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import ArticleAuthors from '../components/ArticleAuthors';
+import { useBookmarks } from '../context/BookmarkContext';
+import { useLikes } from '../context/LikeContext';
+import { getArticleLikesCount, getArticleBookmarksCount } from '../lib/jamsBackend';
+import { formatCount } from '../lib/formatCount';
 
 // Define system fonts for HTML rendering
 const systemFonts = [
@@ -130,6 +134,13 @@ const Article = () => {
   const routes = useRoute();
   const { item } = routes.params;
   const { width } = useWindowDimensions();
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { isLiked, toggleLike } = useLikes();
+  const articleId = articleData?.id ?? item?.id;
+  const saved = isBookmarked(articleId);
+  const liked = isLiked(articleId);
+  const [likeCount, setLikeCount] = useState(null);
+  const [saveCount, setSaveCount] = useState(null);
 
   const getArticleDetails = async () => {
     try {
@@ -177,6 +188,12 @@ const Article = () => {
   useEffect(() => {
     getArticleDetails();
   }, [item.id]);
+
+  useEffect(() => {
+    if (!articleId) return;
+    getArticleLikesCount(articleId).then(setLikeCount);
+    getArticleBookmarksCount(articleId).then(setSaveCount);
+  }, [articleId]);
 
   const insets = useSafeAreaInsets();
   if (!articleData) return null;
@@ -248,6 +265,24 @@ const Article = () => {
           <Ionicons name="chevron-back" size={28} color="#357db5" />
           <Text style={styles.backLabel}>Back</Text>
         </TouchableOpacity>
+        {articleId != null && (
+          <View style={styles.headerBookmarkRow}>
+            <TouchableOpacity
+              onPress={async () => {
+                const meta = { title: articleData?.title, slug: articleData?.slug, authors: articleData?.authors };
+                await toggleBookmark(articleId, meta);
+                getArticleBookmarksCount(articleId).then(setSaveCount);
+              }}
+              style={styles.bookmarkButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={26} color="#357db5" />
+            </TouchableOpacity>
+            {saveCount != null && saveCount > 0 && (
+              <Text style={styles.headerCountText}>{formatCount(saveCount)}</Text>
+            )}
+          </View>
+        )}
       </View>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       <Text style={styles.title}>{articleData.title}</Text>
@@ -280,6 +315,26 @@ const Article = () => {
           />
         )}
     </View>
+
+    {articleId != null && (
+      <View style={styles.likeRow}>
+        <View style={styles.likeRowRight}>
+          {likeCount != null && likeCount > 0 && (
+            <Text style={styles.likeCountText}>{formatCount(likeCount)}</Text>
+          )}
+          <TouchableOpacity
+            onPress={async () => {
+              await toggleLike(articleId);
+              getArticleLikesCount(articleId).then(setLikeCount);
+            }}
+            style={styles.likeButton}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name={liked ? "heart" : "heart-outline"} size={22} color={liked ? "#e74c3c" : "#357db5"} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    )}
 
     <View>
         {parseContent(articleData.content).map((segment, index) => {
@@ -378,6 +433,7 @@ const styles = StyleSheet.create({
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 4,
     paddingBottom: 10,
     paddingHorizontal: 8,
@@ -388,6 +444,40 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  bookmarkButton: {
+    padding: 4,
+  },
+  headerBookmarkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerCountText: {
+    fontFamily: 'sans_regular',
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
+  },
+  likeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    marginBottom: 8,
+  },
+  likeRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  likeCountText: {
+    fontFamily: 'sans_regular',
+    fontSize: 14,
+    color: '#666',
+    marginRight: 4,
+  },
+  likeButton: {
+    padding: 4,
   },
   backLabel: {
     fontFamily: 'sans_semibold',

@@ -94,7 +94,7 @@ const TopArticles = () => {
       <Text style={styles.sectionTitle}>Popular Articles</Text>
       <View>
         {articleData.length > 0 ? (
-          articleData.slice(0, 5).map((item, idx) => {
+          articleData.slice(0, 3).map((item, idx) => {
             return <TopArticlesItem key={item.id} item={item} idx={idx} />;
           })
         ) : (
@@ -110,6 +110,7 @@ export default TopArticles;
 const styles = StyleSheet.create({
   container: {
     padding: 20,
+    paddingBottom: 8,
     marginBottom: 5,
   },
   sectionTitle: {

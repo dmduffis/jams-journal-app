@@ -14,8 +14,14 @@ const Browse = () => {
     <View style={styles.container}>
       <Header />
       <View style={styles.tabBar}>
+        <View
+          style={[
+            styles.tabIndicator,
+            { left: activeTab === TAB_JOURNALS ? 0 : "50%" },
+          ]}
+        />
         <TouchableOpacity
-          style={[styles.tab, activeTab === TAB_JOURNALS && styles.tabActive]}
+          style={styles.tab}
           onPress={() => setActiveTab(TAB_JOURNALS)}
           activeOpacity={0.8}
         >
@@ -24,7 +30,7 @@ const Browse = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === TAB_AUTHORS && styles.tabActive]}
+          style={styles.tab}
           onPress={() => setActiveTab(TAB_AUTHORS)}
           activeOpacity={0.8}
         >
@@ -52,16 +58,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#eee",
+    position: "relative",
+  },
+  tabIndicator: {
+    position: "absolute",
+    bottom: 0,
+    width: "50%",
+    height: 3,
+    backgroundColor: "#357db5",
   },
   tab: {
     flex: 1,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-  },
-  tabActive: {
-    borderBottomWidth: 3,
-    borderBottomColor: "#357db5",
   },
   tabLabel: {
     fontFamily: "sans_semibold",
