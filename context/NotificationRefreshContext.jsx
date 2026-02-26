@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "../lib/supabase";
 import { getNotifications } from "../lib/jamsBackend";
 
 const PREVIEW_NOTIFICATIONS = 3;
@@ -44,6 +45,21 @@ export const NotificationRefreshProvider = ({ children }) => {
     notificationRefetchTriggerRef.current = triggerRefetch;
     return () => {
       notificationRefetchTriggerRef.current = null;
+    };
+  }, [triggerRefetch]);
+
+  // Load notifications as soon as we have a session (so badge shows without opening dropdown)
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted && session?.user) triggerRefetch();
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted && session?.user) triggerRefetch();
+    });
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe?.();
     };
   }, [triggerRefetch]);
 
