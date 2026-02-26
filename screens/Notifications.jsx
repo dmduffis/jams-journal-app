@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View, TouchableOpacity, FlatList, ActivityIndicator, Image } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
 import React, { useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { getNotifications, markNotificationRead } from "../lib/jamsBackend";
+import { notificationRefetchTriggerRef } from "../context/NotificationRefreshContext";
 
 const Notifications = () => {
   const navigation = useNavigation();
@@ -41,6 +42,7 @@ const Notifications = () => {
         setList((prev) =>
           prev.map((n) => (n.id === notification.id ? { ...n, readAt: new Date().toISOString() } : n))
         );
+        notificationRefetchTriggerRef.current?.();
       } catch (_e) {}
     }
   };
@@ -50,11 +52,9 @@ const Notifications = () => {
       n.authorName ??
       (n.author?.firstName != null
         ? [n.author?.firstName, n.author?.lastName].filter(Boolean).join(" ")
-        : null);
-    const authorAvatar = n.authorAvatar ?? n.author?.avatar ?? null;
+        : null) ?? (n.title ?? "New notification");
     const articleTitle = n.articleTitle ?? n.body ?? null;
-    const primary = authorName ? `${authorName} posted a new article` : (n.title ?? "New article");
-    return { authorName, authorAvatar, articleTitle, primary };
+    return { authorName, articleTitle };
   };
 
   const timeAgo = (isoString) => {
@@ -81,38 +81,18 @@ const Notifications = () => {
 
   const renderItem = ({ item }) => {
     const isRead = !!item.readAt;
-    const { authorName, authorAvatar, articleTitle, primary } = getNotificationDisplay(item);
-    const initial = authorName ? authorName.trim().split(/\s+/).map((s) => s[0]).join("").slice(0, 2).toUpperCase() : "?";
+    const { authorName, articleTitle } = getNotificationDisplay(item);
     return (
       <TouchableOpacity
         style={[styles.item, isRead && styles.itemRead]}
         onPress={() => onPressNotification(item)}
         activeOpacity={0.7}
       >
-        <View style={styles.itemAvatar}>
-          {authorAvatar ? (
-            <Image source={{ uri: authorAvatar }} style={styles.itemAvatarImage} />
-          ) : (
-            <View style={styles.itemAvatarPlaceholder}>
-              <Text style={styles.itemAvatarInitial}>{initial}</Text>
-            </View>
-          )}
-        </View>
         <View style={styles.itemContent}>
-          {authorName ? (
-            <Text style={styles.itemAuthor}>
-              {authorName}
-            </Text>
-          ) : null}
+          <Text style={styles.itemAuthor}>{authorName}</Text>
           {articleTitle ? (
-            <Text style={styles.itemTitle}>
-              {articleTitle}
-            </Text>
-          ) : (
-            <Text style={styles.itemTitle}>
-              {primary}
-            </Text>
-          )}
+            <Text style={styles.itemTitle}>{articleTitle}</Text>
+          ) : null}
           <Text style={styles.itemDate}>{timeAgo(item.createdAt)}</Text>
         </View>
       </TouchableOpacity>
@@ -135,7 +115,7 @@ const Notifications = () => {
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : list.length === 0 ? (
-        <Text style={styles.subtitle}>When you follow authors, new article alerts will appear here.</Text>
+        <Text style={styles.subtitle}>No new notifications</Text>
       ) : (
         <FlatList
           data={list}
@@ -213,27 +193,6 @@ const styles = StyleSheet.create({
   },
   itemRead: {
     opacity: 0.7,
-  },
-  itemAvatar: {
-    marginRight: 12,
-  },
-  itemAvatarImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  itemAvatarPlaceholder: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#357db5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  itemAvatarInitial: {
-    fontFamily: "sans_semibold",
-    fontSize: 16,
-    color: "#fff",
   },
   itemContent: {
     flex: 1,

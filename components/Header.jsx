@@ -8,13 +8,15 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from "react-native";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../lib/supabase";
-import { getNotifications } from "../lib/jamsBackend";
+import { getNotifications, markNotificationRead } from "../lib/jamsBackend";
+import { useNotificationRefresh } from "../context/NotificationRefreshContext";
 
 const DEFAULT_AVATAR =
   "https://flvqnuanthbcwndlibds.supabase.co/storage/v1/object/sign/Images/default_fallback_profile.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kZjI4MDE3NS1iNGExLTQ0ODctYjg1Yi02NmU4M2JiYWVmMzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJJbWFnZXMvZGVmYXVsdF9mYWxsYmFja19wcm9maWxlLnBuZyIsImlhdCI6MTc2NDAwMzU3MywiZXhwIjozMzQwODAzNTczfQ.c4K0LPTW2mHNf8zt_zklvsNJwnLS-WA_3avEBDW_q9Y";
@@ -27,6 +29,7 @@ const HEADER_HEIGHT = 120;
 const Header = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { registerRefetch } = useNotificationRefresh();
   const [user, setUser] = useState(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -34,6 +37,7 @@ const Header = () => {
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const headerBottom = insets.top + HEADER_HEIGHT - 63;
+  const fetchIdRef = useRef(0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u));
@@ -44,24 +48,33 @@ const Header = () => {
   }, []);
 
   const fetchNotificationPreview = useCallback(async () => {
+    const thisFetchId = ++fetchIdRef.current;
     setNotificationsLoading(true);
     try {
       const list = await getNotifications(NOTIFICATIONS_FOR_BADGE);
+      if (thisFetchId !== fetchIdRef.current) return;
       const arr = Array.isArray(list) ? list : [];
       setNotifications(arr.slice(0, PREVIEW_NOTIFICATIONS));
       const unread = arr.filter((n) => !n.readAt).length;
       setUnreadCount(unread);
     } catch (_e) {
+      if (thisFetchId !== fetchIdRef.current) return;
       setNotifications([]);
       setUnreadCount(0);
     } finally {
-      setNotificationsLoading(false);
+      if (thisFetchId === fetchIdRef.current) setNotificationsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     if (user) fetchNotificationPreview();
   }, [user, fetchNotificationPreview]);
+
+  // Let push notification handler trigger refetch when a push is received or tapped
+  useEffect(() => {
+    registerRefetch(fetchNotificationPreview);
+    return () => registerRefetch(null);
+  }, [registerRefetch, fetchNotificationPreview]);
 
   const openNotifications = () => {
     setProfileOpen(false);
@@ -89,8 +102,14 @@ const Header = () => {
     navigation.navigate("Notifications");
   };
 
-  const handleNotificationPress = (notification) => {
+  const handleNotificationPress = async (notification) => {
     closeAll();
+    if (notification?.id && !notification?.readAt) {
+      try {
+        await markNotificationRead(notification.id, true);
+        fetchNotificationPreview();
+      } catch (_e) {}
+    }
     if (notification?.articleId) {
       navigation.navigate("Article", { item: { id: notification.articleId } });
     } else {
@@ -195,34 +214,41 @@ const Header = () => {
             ) : notifications.length === 0 ? (
               <Text style={styles.dropdownEmpty}>No new notifications</Text>
             ) : (
-              notifications.map((n) => {
-                const authorName = n.authorName ?? (n.author?.firstName != null
-                  ? [n.author?.firstName, n.author?.lastName].filter(Boolean).join(" ")
-                  : null) ?? (n.title ?? "New notification");
-                const articleTitle = n.articleTitle ?? n.body ?? null;
-                return (
-                  <TouchableOpacity
-                    key={n.id}
-                    style={styles.dropdownItem}
-                    onPress={() => handleNotificationPress(n)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.dropdownItemTextWrap}>
-                      <Text style={styles.dropdownItemTitle}>
-                        {authorName}
-                      </Text>
-                      {articleTitle ? (
-                        <Text style={styles.dropdownItemArticleTitle}>
-                          {articleTitle}
+              <ScrollView
+                style={styles.dropdownScroll}
+                contentContainerStyle={styles.dropdownScrollContent}
+                showsVerticalScrollIndicator={true}
+                keyboardShouldPersistTaps="handled"
+              >
+                {notifications.map((n) => {
+                  const authorName = n.authorName ?? (n.author?.firstName != null
+                    ? [n.author?.firstName, n.author?.lastName].filter(Boolean).join(" ")
+                    : null) ?? (n.title ?? "New notification");
+                  const articleTitle = n.articleTitle ?? n.body ?? null;
+                  return (
+                    <TouchableOpacity
+                      key={n.id}
+                      style={styles.dropdownItem}
+                      onPress={() => handleNotificationPress(n)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.dropdownItemTextWrap}>
+                        <Text style={styles.dropdownItemTitle}>
+                          {authorName}
                         </Text>
-                      ) : null}
-                      <Text style={styles.dropdownItemSubtitle}>
-                        {notificationTimeAgo(n.createdAt)}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
+                        {articleTitle ? (
+                          <Text style={styles.dropdownItemArticleTitle}>
+                            {articleTitle}
+                          </Text>
+                        ) : null}
+                        <Text style={styles.dropdownItemSubtitle}>
+                          {notificationTimeAgo(n.createdAt)}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
             )}
             <TouchableOpacity
               style={styles.dropdownButton}
@@ -366,6 +392,12 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   profileDropdownCard: {},
+  dropdownScroll: {
+    maxHeight: 280,
+  },
+  dropdownScrollContent: {
+    paddingBottom: 8,
+  },
   dropdownHeader: {
     paddingHorizontal: 16,
     paddingVertical: 8,

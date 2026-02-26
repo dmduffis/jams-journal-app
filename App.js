@@ -19,6 +19,7 @@ import SeriesDetails from "./screens/SeriesDetails.jsx";
 import NotificationsScreen from "./screens/Notifications.jsx";
 import UserProfile from "./screens/UserProfile.jsx";
 import { AuthorProvider } from "./context/AuthorContext";
+import { NotificationRefreshProvider, notificationRefetchTriggerRef } from "./context/NotificationRefreshContext";
 import { supabase } from "./lib/supabase";
 import { registerPushToken } from "./lib/jamsBackend";
 import Auth from "./components/Auth";
@@ -145,11 +146,21 @@ export default function App() {
     }
   }, []);
 
+  // When a push is received (e.g. foreground), refresh in-app notification list/badge
+  useEffect(() => {
+    const subReceived = Notifications.addNotificationReceivedListener(() => {
+      notificationRefetchTriggerRef.current?.();
+    });
+    return () => Notifications.removeNotificationSubscription(subReceived);
+  }, []);
+
+  // When user taps a push, navigate and refresh in-app list
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response?.notification?.request?.content?.data ?? {};
       pendingNotificationData.current = data;
       tryNavigateFromNotification(data);
+      notificationRefetchTriggerRef.current?.();
     });
     return () => Notifications.removeNotificationSubscription(subscription);
   }, [tryNavigateFromNotification]);
@@ -198,6 +209,7 @@ export default function App() {
   return (
     <AppErrorBoundary>
     <AuthorProvider>
+      <NotificationRefreshProvider>
       <ApolloProvider client={client}>
         <NavigationContainer ref={navigationRef} onReady={onNavigationReady}>
           <Stack.Navigator>
@@ -251,6 +263,7 @@ export default function App() {
           </Stack.Navigator>
         </NavigationContainer>
       </ApolloProvider>
+      </NotificationRefreshProvider>
     </AuthorProvider>
     </AppErrorBoundary>
   );
