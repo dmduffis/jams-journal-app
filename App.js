@@ -1,16 +1,15 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { ApolloProvider } from "@apollo/client";
 import client from "./services/ApolloClientSetup";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import BottomTabNavigation from "./navigation/BottomTabNavigation";
 import { useFonts } from "expo-font";
-import * as Font from "expo-font";
 import Home from "./screens/Home";
 import AuthorDetails from "./screens/AuthorDetails.jsx";
 import Article from "./screens/Article";
 import * as SplashScreen from "expo-splash-screen";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import IssueDetails from "./screens/IssueDetails.jsx";
 import Videos from "./components/VideoSeriesComponent";
 import SeriesDetails from "./screens/SeriesDetails.jsx";
@@ -19,6 +18,31 @@ import { supabase } from "./lib/supabase";
 import Auth from "./components/Auth";
 
 SplashScreen.preventAutoHideAsync();
+
+class AppErrorBoundary extends React.Component {
+  state = { hasError: false, error: null };
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error("[App ErrorBoundary]", error?.message ?? error, info?.componentStack);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+          <Text style={{ fontFamily: "sans_semibold", fontSize: 16, color: "#333", textAlign: "center" }}>
+            Something went wrong. Check the Metro/console logs for the actual error.
+          </Text>
+          <Text style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+            {this.state.error?.message ?? String(this.state.error)}
+          </Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const Stack = createNativeStackNavigator();
 
@@ -79,11 +103,16 @@ export default function App() {
 
   // Show auth screen if not logged in
   if (!session) {
-    return <Auth />;
+    return (
+      <AppErrorBoundary>
+        <Auth />
+      </AppErrorBoundary>
+    );
   }
 
   // Show main app if logged in
   return (
+    <AppErrorBoundary>
     <AuthorProvider>
       <ApolloProvider client={client}>
         <NavigationContainer onReady={onLayoutRootView}>
@@ -127,6 +156,7 @@ export default function App() {
         </NavigationContainer>
       </ApolloProvider>
     </AuthorProvider>
+    </AppErrorBoundary>
   );
 }
 
