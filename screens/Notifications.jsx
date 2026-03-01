@@ -117,13 +117,15 @@ const Notifications = () => {
       ) : list.length === 0 ? (
         <Text style={styles.subtitle}>No new notifications</Text>
       ) : (
-        <FlatList
-          data={list}
-          keyExtractor={(n) => n.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        <View style={styles.listWrapper}>
+          <FlatList
+            data={list}
+            keyExtractor={(n) => n.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
       )}
       </View>
     </SafeAreaView>
@@ -180,6 +182,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#c00",
   },
+  listWrapper: {
+    marginHorizontal: -20,
+  },
   listContent: {
     paddingBottom: 24,
   },
@@ -187,12 +192,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     paddingVertical: 14,
-    paddingHorizontal: 0,
+    paddingHorizontal: 20,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#eee",
+    backgroundColor: "#f5f5f5",
   },
   itemRead: {
-    opacity: 0.7,
+    backgroundColor: "#ffffff",
   },
   itemContent: {
     flex: 1,

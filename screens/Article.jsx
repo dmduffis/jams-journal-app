@@ -269,6 +269,19 @@ const Article = () => {
           <View style={styles.headerBookmarkRow}>
             <TouchableOpacity
               onPress={async () => {
+                await toggleLike(articleId);
+                getArticleLikesCount(articleId).then(setLikeCount);
+              }}
+              style={styles.headerActionButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Ionicons name={liked ? "heart" : "heart-outline"} size={26} color={liked ? "#e74c3c" : "#357db5"} />
+            </TouchableOpacity>
+            {likeCount != null && likeCount > 0 && (
+              <Text style={styles.headerCountText}>{formatCount(likeCount)}</Text>
+            )}
+            <TouchableOpacity
+              onPress={async () => {
                 const meta = { title: articleData?.title, slug: articleData?.slug, authors: articleData?.authors };
                 await toggleBookmark(articleId, meta);
                 getArticleBookmarksCount(articleId).then(setSaveCount);
@@ -316,26 +329,6 @@ const Article = () => {
         )}
     </View>
 
-    {articleId != null && (
-      <View style={styles.likeRow}>
-        <View style={styles.likeRowRight}>
-          {likeCount != null && likeCount > 0 && (
-            <Text style={styles.likeCountText}>{formatCount(likeCount)}</Text>
-          )}
-          <TouchableOpacity
-            onPress={async () => {
-              await toggleLike(articleId);
-              getArticleLikesCount(articleId).then(setLikeCount);
-            }}
-            style={styles.likeButton}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Ionicons name={liked ? "heart" : "heart-outline"} size={22} color={liked ? "#e74c3c" : "#357db5"} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    )}
-
     <View>
         {parseContent(articleData.content).map((segment, index) => {
           if (segment.type === 'markdown') {
@@ -358,6 +351,28 @@ const Article = () => {
           return null;
         })}
     </View>
+    {articleId != null && (
+      <View style={styles.enjoyedCta}>
+        <Text style={styles.enjoyedCtaText} numberOfLines={2}>
+          Enjoyed this article? Consider liking it to support the author.
+        </Text>
+        <View style={styles.enjoyedCtaRow}>
+          <TouchableOpacity
+            onPress={async () => {
+              await toggleLike(articleId);
+              getArticleLikesCount(articleId).then(setLikeCount);
+            }}
+            style={styles.enjoyedCtaLikeButton}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name={liked ? "heart" : "heart-outline"} size={26} color={liked ? "#e74c3c" : "#357db5"} />
+          </TouchableOpacity>
+          {likeCount != null && likeCount > 0 && (
+            <Text style={styles.enjoyedCtaCount}>{formatCount(likeCount)}</Text>
+          )}
+        </View>
+      </View>
+    )}
       </ScrollView>
     </View>
   );
@@ -451,33 +466,17 @@ const styles = StyleSheet.create({
   headerBookmarkRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 2,
+  },
+  headerActionButton: {
+    padding: 4,
+    marginLeft: 4,
   },
   headerCountText: {
     fontFamily: 'sans_regular',
     fontSize: 14,
     color: '#666',
     marginLeft: 4,
-  },
-  likeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingVertical: 12,
-    paddingHorizontal: 0,
-    marginBottom: 8,
-  },
-  likeRowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  likeCountText: {
-    fontFamily: 'sans_regular',
-    fontSize: 14,
-    color: '#666',
-    marginRight: 4,
-  },
-  likeButton: {
-    padding: 4,
   },
   backLabel: {
     fontFamily: 'sans_semibold',
@@ -500,5 +499,36 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: 'sans_semibold',
     lineHeight: 40,
+  },
+  enjoyedCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 32,
+    marginBottom: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 0,
+  },
+  enjoyedCtaText: {
+    flex: 1,
+    fontFamily: 'serif_regular',
+    fontSize: 16,
+    color: '#555',
+    fontStyle: 'italic',
+    lineHeight: 24,
+    marginRight: 24,
+  },
+  enjoyedCtaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  enjoyedCtaLikeButton: {
+    padding: 4,
+  },
+  enjoyedCtaCount: {
+    fontFamily: 'sans_regular',
+    fontSize: 14,
+    color: '#666',
   },
 })
