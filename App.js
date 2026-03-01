@@ -21,6 +21,7 @@ import UserProfile from "./screens/UserProfile.jsx";
 import Bookmarks from "./screens/Bookmarks.jsx";
 import { AuthorProvider } from "./context/AuthorContext";
 import { BookmarkProvider } from "./context/BookmarkContext";
+import { HighlightProvider } from "./context/HighlightContext";
 import { LikeProvider } from "./context/LikeContext";
 import { NotificationRefreshProvider, notificationRefetchTriggerRef } from "./context/NotificationRefreshContext";
 import { supabase } from "./lib/supabase";
@@ -213,6 +214,7 @@ export default function App() {
     <AppErrorBoundary>
     <AuthorProvider>
       <BookmarkProvider>
+      <HighlightProvider>
       <LikeProvider>
       <NotificationRefreshProvider>
       <ApolloProvider client={client}>
@@ -276,6 +278,7 @@ export default function App() {
       </ApolloProvider>
       </NotificationRefreshProvider>
       </LikeProvider>
+      </HighlightProvider>
       </BookmarkProvider>
     </AuthorProvider>
     </AppErrorBoundary>

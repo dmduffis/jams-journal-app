@@ -1,12 +1,15 @@
-import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions, TouchableOpacity } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions, TouchableOpacity, Alert } from 'react-native'
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import RenderHtml from 'react-native-render-html';
 import Markdown from 'react-native-markdown-display';
+import { HighlightText } from 'rn-text-touch-highlight';
+import { marked } from 'marked';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import ArticleAuthors from '../components/ArticleAuthors';
 import { useBookmarks } from '../context/BookmarkContext';
+import { useHighlights } from '../context/HighlightContext';
 import { useLikes } from '../context/LikeContext';
 import { getArticleLikesCount, getArticleBookmarksCount } from '../lib/jamsBackend';
 import { formatCount } from '../lib/formatCount';
@@ -136,11 +139,15 @@ const Article = () => {
   const { width } = useWindowDimensions();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { isLiked, toggleLike } = useLikes();
+  const { fetchForArticle, addHighlight, getHighlightsForArticle } = useHighlights();
   const articleId = articleData?.id ?? item?.id;
   const saved = isBookmarked(articleId);
   const liked = isLiked(articleId);
   const [likeCount, setLikeCount] = useState(null);
   const [saveCount, setSaveCount] = useState(null);
+  const highlightRef = useRef(null);
+  const articleHighlights = articleId != null ? getHighlightsForArticle(articleId) : [];
+  const prevHighlightCountRef = useRef(0);
 
   const getArticleDetails = async () => {
     try {
@@ -194,6 +201,11 @@ const Article = () => {
     getArticleLikesCount(articleId).then(setLikeCount);
     getArticleBookmarksCount(articleId).then(setSaveCount);
   }, [articleId]);
+
+  useEffect(() => {
+    if (!articleId) return;
+    fetchForArticle(articleId);
+  }, [articleId, fetchForArticle]);
 
   const insets = useSafeAreaInsets();
   if (!articleData) return null;
@@ -256,6 +268,52 @@ const Article = () => {
     
     return segments;
   };
+
+  // Plain text version of article body for HighlightText (same string = same offsets for highlights)
+  const plainText = useMemo(() => {
+    if (!articleData?.content) return '';
+    const segments = parseContent(articleData.content);
+    const fullHtml = segments
+      .map((seg) => (seg.type === 'markdown' ? marked.parse(seg.content) : seg.content))
+      .join('');
+    return fullHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }, [articleData?.content]);
+
+  const initialHighlightRanges = useMemo(
+    () =>
+      articleHighlights.map((h) => ({
+        start: Number(h.startOffset) || 0,
+        end: Number(h.endOffset) || 0,
+      })),
+    [articleHighlights]
+  );
+
+  const handleHighlightEnd = useCallback(
+    async (id) => {
+      if (!articleId || !highlightRef.current || !plainText) return;
+      try {
+        const data = highlightRef.current.getHighlightedData?.() ?? [];
+        const prevCount = prevHighlightCountRef.current;
+        if (data.length <= prevCount) return;
+        const newRange = data[data.length - 1];
+        const text = plainText.slice(newRange.start, newRange.end).trim();
+        if (!text) return;
+        await addHighlight(articleId, {
+          text,
+          startOffset: newRange.start,
+          endOffset: newRange.end,
+        });
+        prevHighlightCountRef.current = data.length;
+      } catch (e) {
+        Alert.alert('Highlight', e?.message === 'Not authenticated' ? 'Sign in to save highlights.' : e?.message ?? 'Could not save highlight.');
+      }
+    },
+    [articleId, plainText, addHighlight]
+  );
+
+  useEffect(() => {
+    prevHighlightCountRef.current = articleHighlights.length;
+  }, [articleHighlights.length]);
 
   return (
     <View style={styles.wrapper}>
@@ -329,8 +387,24 @@ const Article = () => {
         )}
     </View>
 
-    <View>
-        {parseContent(articleData.content).map((segment, index) => {
+    {articleId != null && plainText ? (
+      <View style={styles.articleBody}>
+        <HighlightText
+          ref={highlightRef}
+          text={plainText}
+          initialHighlightData={initialHighlightRanges}
+          onHighlightEnd={handleHighlightEnd}
+          textColor="#333"
+          highlightColor="rgba(53, 125, 181, 0.35)"
+          highlightedTextColor="#333"
+          textStyle={{ fontSize: 16, lineHeight: 32 }}
+          lineSpace={4}
+          lineBreakHeight={8}
+        />
+      </View>
+    ) : (
+      <View>
+        {parseContent(articleData.content || '').map((segment, index) => {
           if (segment.type === 'markdown') {
             return (
               <Markdown key={index} style={markdownStyles}>
@@ -350,7 +424,8 @@ const Article = () => {
           }
           return null;
         })}
-    </View>
+      </View>
+    )}
     {articleId != null && (
       <View style={styles.enjoyedCta}>
         <Text style={styles.enjoyedCtaText} numberOfLines={2}>
@@ -491,6 +566,10 @@ const styles = StyleSheet.create({
     paddingRight: 20,
     marginBottom: 50,
     backgroundColor: '#fff',
+  },
+  articleBody: {
+    marginTop: 8,
+    marginBottom: 16,
   },
   title: {
     fontSize: 30,
