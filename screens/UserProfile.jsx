@@ -16,6 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../lib/supabase";
 import { AuthorContext } from "../context/AuthorContext";
 import { useBookmarks } from "../context/BookmarkContext";
+import { useHighlights } from "../context/HighlightContext";
 import { getBookmarks } from "../lib/jamsBackend";
 
 const AUTHORS_URL = "https://jams-journal-backend.up.railway.app/authors";
@@ -24,17 +25,20 @@ const DEFAULT_AVATAR =
 
 const TAB_FOLLOWING = "following";
 const TAB_SAVED = "saved";
+const TAB_HIGHLIGHTS = "highlights";
 
 const UserProfile = () => {
   const navigation = useNavigation();
   const { followedAuthors, loadingFollows } = useContext(AuthorContext);
   const { bookmarkedIds, bookmarkMeta } = useBookmarks();
+  const { allHighlights, fetchAll: fetchHighlights } = useHighlights();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState(TAB_FOLLOWING);
   const [followingList, setFollowingList] = useState([]);
   const [loadingFollowing, setLoadingFollowing] = useState(true);
   const [bookmarksList, setBookmarksList] = useState([]);
   const [loadingBookmarks, setLoadingBookmarks] = useState(false);
+  const [loadingHighlights, setLoadingHighlights] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u));
@@ -92,6 +96,21 @@ const UserProfile = () => {
   useEffect(() => {
     if (activeTab === TAB_SAVED) loadBookmarks();
   }, [activeTab, loadBookmarks]);
+
+  const loadHighlights = useCallback(async () => {
+    setLoadingHighlights(true);
+    try {
+      await fetchHighlights();
+    } catch (_e) {
+      // keep previous list
+    } finally {
+      setLoadingHighlights(false);
+    }
+  }, [fetchHighlights]);
+
+  useEffect(() => {
+    if (activeTab === TAB_HIGHLIGHTS) loadHighlights();
+  }, [activeTab, loadHighlights]);
 
   const displayBookmarksList = useMemo(() => {
     const fromServer = Array.isArray(bookmarksList) ? bookmarksList : [];
@@ -161,6 +180,25 @@ const UserProfile = () => {
     );
   };
 
+  const renderHighlightItem = ({ item: highlight }) => {
+    const snippet = (highlight.text || "").trim();
+    const displayText = snippet.length > 120 ? snippet.slice(0, 120) + "…" : snippet;
+    const articleItem = { id: highlight.articleId };
+
+    return (
+      <TouchableOpacity
+        style={styles.highlightItem}
+        onPress={() => navigation.navigate("Article", { item: articleItem })}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.highlightSnippet} numberOfLines={3}>
+          {displayText || "Saved passage"}
+        </Text>
+        <Text style={styles.highlightLink}>View article</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.backRow}>
@@ -183,7 +221,14 @@ const UserProfile = () => {
         <View
           style={[
             styles.tabIndicator,
-            { left: activeTab === TAB_FOLLOWING ? 0 : "50%" },
+            {
+              left:
+                activeTab === TAB_FOLLOWING
+                  ? "0%"
+                  : activeTab === TAB_SAVED
+                    ? "33.33%"
+                    : "66.66%",
+            },
           ]}
         />
         <TouchableOpacity
@@ -222,6 +267,24 @@ const UserProfile = () => {
             )}
           </View>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tab}
+          onPress={() => setActiveTab(TAB_HIGHLIGHTS)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.tabRow}>
+            <Text style={[styles.tabLabel, activeTab === TAB_HIGHLIGHTS && styles.tabLabelActive]}>
+              Highlights
+            </Text>
+            {allHighlights.length > 0 && (
+              <View style={styles.tabCountPill}>
+                <Text style={[styles.tabCount, activeTab === TAB_HIGHLIGHTS && styles.tabCountActive]}>
+                  {allHighlights.length}
+                </Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.tabContent}>
@@ -253,7 +316,7 @@ const UserProfile = () => {
               ))
             )}
           </ScrollView>
-        ) : (
+        ) : activeTab === TAB_SAVED ? (
           loadingBookmarks ? (
             <View style={styles.tabScrollContent}>
               <ActivityIndicator size="small" color="#357db5" style={styles.loader} />
@@ -274,6 +337,25 @@ const UserProfile = () => {
               showsVerticalScrollIndicator={false}
             />
           )
+        ) : loadingHighlights ? (
+          <View style={styles.tabScrollContent}>
+            <ActivityIndicator size="small" color="#357db5" style={styles.loader} />
+          </View>
+        ) : allHighlights.length === 0 ? (
+          <View style={styles.tabScrollContent}>
+            <Text style={styles.emptyText}>
+              No highlights yet. In an article, select text and tap "Highlight" to save a passage.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={allHighlights}
+            keyExtractor={(h) => String(h.id ?? h.articleId + "-" + (h.startOffset ?? 0))}
+            renderItem={renderHighlightItem}
+            contentContainerStyle={styles.highlightListContent}
+            style={styles.tabScroll}
+            showsVerticalScrollIndicator={false}
+          />
         )}
       </View>
     </SafeAreaView>
@@ -351,7 +433,7 @@ const styles = StyleSheet.create({
   tabIndicator: {
     position: "absolute",
     bottom: 0,
-    width: "50%",
+    width: "33.33%",
     height: 3,
     backgroundColor: "#357db5",
   },
@@ -457,5 +539,27 @@ const styles = StyleSheet.create({
     fontFamily: "sans_regular",
     fontSize: 13,
     color: "#999",
+  },
+  highlightListContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  highlightItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#eee",
+  },
+  highlightSnippet: {
+    fontFamily: "serif_regular",
+    fontSize: 15,
+    color: "#333",
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  highlightLink: {
+    fontFamily: "sans_semibold",
+    fontSize: 14,
+    color: "#357db5",
   },
 });

@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions, TouchableOpacity, Alert, ActivityIndicator, Animated } from 'react-native'
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import RenderHtml from 'react-native-render-html';
 import Markdown from 'react-native-markdown-display';
-import { HighlightText } from 'rn-text-touch-highlight';
+import { WebView } from 'react-native-webview';
 import { marked } from 'marked';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,8 +11,23 @@ import ArticleAuthors from '../components/ArticleAuthors';
 import { useBookmarks } from '../context/BookmarkContext';
 import { useHighlights } from '../context/HighlightContext';
 import { useLikes } from '../context/LikeContext';
-import { getArticleLikesCount, getArticleBookmarksCount } from '../lib/jamsBackend';
+import { getArticleLikesCount, getArticleBookmarksCount, JAMS_BACKEND_BASE_URL } from '../lib/jamsBackend';
 import { formatCount } from '../lib/formatCount';
+
+const ID_FIELD_NAMES = ["uuid", "id", "articleId"];
+/** Article id for highlights: backend accepts article.uuid or article.id (same value; opaque string, e.g. "16112"). */
+function getArticleIdFromResponse(data) {
+  if (!data || typeof data !== "object") return null;
+  const pick = (d) => {
+    if (!d || typeof d !== "object") return null;
+    for (const key of ID_FIELD_NAMES) {
+      const v = d[key];
+      if (v != null && String(v).trim() !== "") return String(v).trim();
+    }
+    return null;
+  };
+  return pick(data) ?? pick(data?.article) ?? pick(data?.data) ?? null;
+}
 
 // Define system fonts for HTML rendering
 const systemFonts = [
@@ -131,6 +146,69 @@ const tagsStyles = {
   },
 };
 
+// Skeleton placeholder that mimics article layout (title, author, body lines)
+function ArticleSkeleton({ style }) {
+  const pulse = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.7, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.4, duration: 600, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  return (
+    <View style={[skeletonStyles.container, style]}>
+      <Animated.View style={[skeletonStyles.titleBar, { opacity: pulse }]} />
+      <View style={skeletonStyles.authorRow}>
+        <Animated.View style={[skeletonStyles.avatar, { opacity: pulse }]} />
+        <Animated.View style={[skeletonStyles.authorLine, { opacity: pulse }]} />
+      </View>
+      {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <Animated.View
+          key={i}
+          style={[
+            skeletonStyles.bodyLine,
+            i === 3 && skeletonStyles.bodyLineShort,
+            { opacity: pulse },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+// Compact skeleton for body-only loading (WebView loading)
+function BodySkeleton() {
+  const pulse = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.7, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.4, duration: 600, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  return (
+    <View style={skeletonStyles.bodyContainer}>
+      {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+        <Animated.View
+          key={i}
+          style={[
+            skeletonStyles.bodyLine,
+            i % 4 === 0 && skeletonStyles.bodyLineShort,
+            { opacity: pulse },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
 const Article = () => {
   const [articleData, setArticleData] = useState(null);
   const navigation = useNavigation();
@@ -141,51 +219,59 @@ const Article = () => {
   const { isLiked, toggleLike } = useLikes();
   const { fetchForArticle, addHighlight, getHighlightsForArticle } = useHighlights();
   const articleId = articleData?.id ?? item?.id;
+  /** Article id for highlights: use article.uuid or article.id (backend accepts either; same value, opaque string). */
+  const articleHighlightId =
+    (articleData?.uuid != null ? String(articleData.uuid).trim() : null)
+    ?? (articleData?.id != null ? String(articleData.id).trim() : null)
+    ?? getArticleIdFromResponse(articleData)
+    ?? (item?.id != null ? String(item.id).trim() : null);
   const saved = isBookmarked(articleId);
   const liked = isLiked(articleId);
   const [likeCount, setLikeCount] = useState(null);
   const [saveCount, setSaveCount] = useState(null);
-  const highlightRef = useRef(null);
-  const articleHighlights = articleId != null ? getHighlightsForArticle(articleId) : [];
-  const prevHighlightCountRef = useRef(0);
+  const webViewRef = useRef(null);
+  const [articleBodyHeight, setArticleBodyHeight] = useState(800);
+  const [bodyLoaded, setBodyLoaded] = useState(false);
+  const [showHighlightBar, setShowHighlightBar] = useState(false);
+  const [pendingSelection, setPendingSelection] = useState(null);
+  const articleHighlights = articleHighlightId != null ? getHighlightsForArticle(articleHighlightId) : [];
 
   const getArticleDetails = async () => {
     try {
       const response = await fetch(
-        `https://jams-journal-backend.up.railway.app/articles/${item.id}`
+        `${JAMS_BACKEND_BASE_URL}/articles/${item.id}`
       );
       const data = await response.json();
       
       if (data) {
-        // Normalize authors - extract actual author objects from nested structure
-        if (data.authors && Array.isArray(data.authors)) {
-          // Authors array contains objects with nested 'author' property
-          // Extract the actual author objects and normalize avatar/photo
-          data.authors = data.authors
+        const article = data.article ?? data.data ?? data;
+        if (article && !article.uuid) {
+          const fromTop = data.uuid ?? data.article?.uuid ?? data.data?.uuid;
+          if (fromTop != null) article.uuid = typeof fromTop === "string" ? fromTop.trim() : String(fromTop);
+        }
+        if (__DEV__) console.warn("[Article] article.uuid:", article?.uuid, "keys:", article ? Object.keys(article) : []);
+        if (article.authors && Array.isArray(article.authors)) {
+          article.authors = article.authors
             .map(authorItem => {
               const author = authorItem.author || authorItem;
               if (author) {
-                // Normalize avatar/photo field
-                author.avatar = author.avatar 
-                  || author.photo?.url 
-                  || (typeof author.photo === 'string' ? author.photo : null);
+                author.avatar = author.avatar
+                  || author.photo?.url
+                  || (typeof author.photo === "string" ? author.photo : null);
               }
               return author;
             })
-            .filter(author => author); // Remove any null/undefined
-        } else if (data.author) {
-          // Single author case - normalize avatar/photo
-          const author = data.author;
-          author.avatar = author.avatar 
-            || author.photo?.url 
-            || (typeof author.photo === 'string' ? author.photo : null);
-          data.authors = [author];
+            .filter(author => author);
+        } else if (article.author) {
+          const author = article.author;
+          author.avatar = author.avatar
+            || author.photo?.url
+            || (typeof author.photo === "string" ? author.photo : null);
+          article.authors = [author];
         } else {
-          // No authors at all
-          data.authors = [];
+          article.authors = [];
         }
-        
-        setArticleData(data);
+        setArticleData(article);
       }
     } catch (error) {
       console.error("Error fetching article details:", error);
@@ -203,12 +289,11 @@ const Article = () => {
   }, [articleId]);
 
   useEffect(() => {
-    if (!articleId) return;
-    fetchForArticle(articleId);
-  }, [articleId, fetchForArticle]);
+    if (!articleHighlightId) return;
+    fetchForArticle(articleHighlightId);
+  }, [articleHighlightId, fetchForArticle]);
 
   const insets = useSafeAreaInsets();
-  if (!articleData) return null;
 
   // Convert superscript notation to unicode superscript characters
   const formatContent = (content) => {
@@ -269,51 +354,200 @@ const Article = () => {
     return segments;
   };
 
-  // Plain text version of article body for HighlightText (same string = same offsets for highlights)
-  const plainText = useMemo(() => {
+  // Full HTML for WebView body (markdown segments converted via marked)
+  const fullHtml = useMemo(() => {
     if (!articleData?.content) return '';
     const segments = parseContent(articleData.content);
-    const fullHtml = segments
+    const bodyHtml = segments
       .map((seg) => (seg.type === 'markdown' ? marked.parse(seg.content) : seg.content))
       .join('');
-    return fullHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const baseCss = 'body{font-size:16px;line-height:32px;color:#333;font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;} p{margin-bottom:15px;} h1{font-size:28px;margin:20px 0 15px;} h2{font-size:22px;margin:24px 0 10px;} h3,h4{font-size:18px;margin:20px 0 10px;} table{border-collapse:collapse;width:100%;margin:16px 0;} th,td{border:1px solid #ddd;padding:10px;text-align:left;} th{background:#357db5;color:#fff;} mark{background:rgba(53,125,181,0.35);}';
+    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${baseCss}</style></head><body id="article-body">${bodyHtml}</body></html>`;
   }, [articleData?.content]);
 
-  const initialHighlightRanges = useMemo(
-    () =>
-      articleHighlights.map((h) => ({
-        start: Number(h.startOffset) || 0,
-        end: Number(h.endOffset) || 0,
-      })),
-    [articleHighlights]
+  const getSelectionOffsets = useMemo(
+    () => `
+(function() {
+  function getOffsets() {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    var range = sel.getRangeAt(0);
+    var body = document.body;
+    if (!body.contains(range.commonAncestorContainer)) return null;
+    var r = document.createRange();
+    r.selectNodeContents(body);
+    r.setEnd(range.startContainer, range.startOffset);
+    var startOffset = r.toString().length;
+    var endOffset = startOffset + range.toString().length;
+    return { text: range.toString().trim(), startOffset: startOffset, endOffset: endOffset };
+  }
+  function applyHighlights(highlights) {
+    if (!highlights || !highlights.length) return;
+    if (!window.__articleBodyHtml) window.__articleBodyHtml = document.body.innerHTML;
+    document.body.innerHTML = window.__articleBodyHtml;
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    var textNodes = [];
+    while (walker.nextNode()) textNodes.push({ node: walker.currentNode, len: walker.currentNode.textContent.length });
+    function getNodeAt(offset) {
+      var pos = 0;
+      for (var i = 0; i < textNodes.length; i++) {
+        if (offset <= pos + textNodes[i].len) return { node: textNodes[i].node, offset: Math.min(offset - pos, textNodes[i].len) };
+        pos += textNodes[i].len;
+      }
+      return null;
+    }
+    highlights.sort(function(a,b) { return (a.startOffset||0) - (b.startOffset||0); });
+    for (var i = 0; i < highlights.length; i++) {
+      var h = highlights[i];
+      var start = getNodeAt(h.startOffset || 0);
+      var end = getNodeAt(h.endOffset || h.startOffset || 0);
+      if (!start || !end) continue;
+      var range = document.createRange();
+      range.setStart(start.node, start.offset);
+      range.setEnd(end.node, Math.min(end.offset, end.node.textContent.length));
+      try {
+        var mark = document.createElement('mark');
+        range.surroundContents(mark);
+      } catch (e) {}
+    }
+  }
+  window.__getSelectionOffsets = getOffsets;
+  window.__applyHighlights = applyHighlights;
+  function notifySelection() {
+    var o = getOffsets();
+    if (!window.ReactNativeWebView) return;
+    if (o && o.text) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'selection', text: o.text, startOffset: o.startOffset, endOffset: o.endOffset }));
+    } else {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'selectionCleared' }));
+    }
+  }
+  document.addEventListener('selectionchange', function() { setTimeout(notifySelection, 100); });
+  document.addEventListener('mouseup', function() { setTimeout(notifySelection, 100); });
+  document.addEventListener('touchend', function() { setTimeout(notifySelection, 150); });
+  if (document.readyState === 'complete') {
+    setTimeout(function() {
+      if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'height', value: document.body.scrollHeight }));
+    }, 100);
+  } else {
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'height', value: document.body.scrollHeight }));
+      }, 100);
+    });
+  }
+})();
+`,
+    []
   );
 
-  const handleHighlightEnd = useCallback(
-    async (id) => {
-      if (!articleId || !highlightRef.current || !plainText) return;
+  const handleWebViewMessage = useCallback(
+    async (event) => {
       try {
-        const data = highlightRef.current.getHighlightedData?.() ?? [];
-        const prevCount = prevHighlightCountRef.current;
-        if (data.length <= prevCount) return;
-        const newRange = data[data.length - 1];
-        const text = plainText.slice(newRange.start, newRange.end).trim();
-        if (!text) return;
-        await addHighlight(articleId, {
-          text,
-          startOffset: newRange.start,
-          endOffset: newRange.end,
-        });
-        prevHighlightCountRef.current = data.length;
+        const data = JSON.parse(event.nativeEvent.data || '{}');
+        if (data.type === 'height' && typeof data.value === 'number') {
+          setArticleBodyHeight(Math.max(400, data.value + 40));
+          return;
+        }
+        if (data.type === 'selection' && data.text) {
+          setPendingSelection({ text: data.text, startOffset: data.startOffset, endOffset: data.endOffset });
+          setShowHighlightBar(true);
+          return;
+        }
+        if (data.type === 'selectionCleared') {
+          setShowHighlightBar(false);
+          setPendingSelection(null);
+          return;
+        }
+        if (data.type === 'highlight' && data.text && articleHighlightId) {
+          try {
+            await addHighlight(articleHighlightId, {
+              text: data.text,
+              startOffset: data.startOffset,
+              endOffset: data.endOffset,
+            });
+            const list = await fetchForArticle(articleHighlightId);
+            const ranges = (list || []).filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset }));
+            webViewRef.current?.injectJavaScript(
+              `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(ranges)}); true;`
+            );
+            Alert.alert('Highlight saved', 'This passage has been saved to your highlights.');
+          } catch (err) {
+            Alert.alert(
+              'Could not save highlight',
+              err?.message === 'Not authenticated' ? 'Sign in to save highlights.' : err?.message ?? 'The server may not support highlights yet. Try again later.'
+            );
+          }
+          return;
+        }
       } catch (e) {
-        Alert.alert('Highlight', e?.message === 'Not authenticated' ? 'Sign in to save highlights.' : e?.message ?? 'Could not save highlight.');
+        if (e?.message || e?.nativeEvent?.data) {
+          Alert.alert('Highlight', e?.message ?? 'Something went wrong.');
+        }
       }
     },
-    [articleId, plainText, addHighlight]
+    [articleHighlightId, addHighlight, fetchForArticle]
   );
 
+  const handleSaveHighlightPress = useCallback(async () => {
+    if (!pendingSelection?.text) return;
+    if (!articleHighlightId) {
+      Alert.alert("Can't save highlight", "Article ID is missing. Use GET /articles or GET /articles/:id from this backend so the article has id/uuid for highlights.");
+      return;
+    }
+    if (__DEV__) {
+      console.warn("[Highlights] Save pressed — articleHighlightId:", articleHighlightId);
+    }
+    try {
+      await addHighlight(articleHighlightId, {
+        text: pendingSelection.text,
+        startOffset: pendingSelection.startOffset,
+        endOffset: pendingSelection.endOffset,
+      });
+      setShowHighlightBar(false);
+      setPendingSelection(null);
+      webViewRef.current?.injectJavaScript('(function(){ if(window.getSelection()) window.getSelection().removeAllRanges(); })(); true;');
+      const list = await fetchForArticle(articleHighlightId);
+      const ranges = (list || []).filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset }));
+      webViewRef.current?.injectJavaScript(
+        `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(ranges)}); true;`
+      );
+      Alert.alert('Highlight saved', 'This passage has been saved to your highlights.');
+    } catch (err) {
+      Alert.alert(
+        'Could not save highlight',
+        err?.message === 'Not authenticated' ? 'Sign in to save highlights.' : err?.message ?? 'The server may not support highlights yet. Try again later.'
+      );
+    }
+  }, [articleHighlightId, pendingSelection, addHighlight, fetchForArticle]);
+
+  const handleWebViewLoadEnd = useCallback(() => {
+    setBodyLoaded(true);
+    const ranges = articleHighlights.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset }));
+    const script = `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(ranges)}); true;`;
+    setTimeout(() => webViewRef.current?.injectJavaScript(script), 150);
+  }, [articleHighlights]);
+
   useEffect(() => {
-    prevHighlightCountRef.current = articleHighlights.length;
-  }, [articleHighlights.length]);
+    setBodyLoaded(false);
+  }, [fullHtml]);
+
+  if (!articleData) {
+    return (
+      <View style={styles.wrapper}>
+        <View style={[styles.statusBarFill, { height: insets.top }]} />
+        <View style={styles.backRow}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <Ionicons name="chevron-back" size={28} color="#357db5" />
+            <Text style={styles.backLabel}>Back</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
+          <ArticleSkeleton />
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrapper}>
@@ -387,19 +621,23 @@ const Article = () => {
         )}
     </View>
 
-    {articleId != null && plainText ? (
-      <View style={styles.articleBody}>
-        <HighlightText
-          ref={highlightRef}
-          text={plainText}
-          initialHighlightData={initialHighlightRanges}
-          onHighlightEnd={handleHighlightEnd}
-          textColor="#333"
-          highlightColor="rgba(53, 125, 181, 0.35)"
-          highlightedTextColor="#333"
-          textStyle={{ fontSize: 16, lineHeight: 32 }}
-          lineSpace={4}
-          lineBreakHeight={8}
+    {articleId != null && fullHtml ? (
+      <View style={[styles.articleBody, { height: bodyLoaded ? articleBodyHeight : 240 }]}>
+        {!bodyLoaded ? (
+          <View style={styles.bodyLoading}>
+            <BodySkeleton />
+          </View>
+        ) : null}
+        <WebView
+          ref={webViewRef}
+          source={{ html: fullHtml }}
+          style={[styles.webView, !bodyLoaded && styles.webViewHidden]}
+          scrollEnabled={false}
+          showsVerticalScrollIndicator={false}
+          injectedJavaScript={getSelectionOffsets}
+          onMessage={handleWebViewMessage}
+          onLoadEnd={handleWebViewLoadEnd}
+          originWhitelist={['*']}
         />
       </View>
     ) : (
@@ -449,6 +687,18 @@ const Article = () => {
       </View>
     )}
       </ScrollView>
+    {showHighlightBar && pendingSelection?.text ? (
+      <View style={[styles.highlightBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <TouchableOpacity
+          style={styles.highlightBarButton}
+          onPress={handleSaveHighlightPress}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="bookmark" size={20} color="#fff" />
+          <Text style={styles.highlightBarLabel}>Save highlight</Text>
+        </TouchableOpacity>
+      </View>
+    ) : null}
     </View>
   );
 }
@@ -570,6 +820,27 @@ const styles = StyleSheet.create({
   articleBody: {
     marginTop: 8,
     marginBottom: 16,
+    width: '100%',
+  },
+  webView: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  webViewHidden: {
+    opacity: 0,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  bodyLoading: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 1,
   },
   title: {
     fontSize: 30,
@@ -610,4 +881,73 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-})
+  highlightBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#357db5',
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  highlightBarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  highlightBarLabel: {
+    fontFamily: 'sans_semibold',
+    fontSize: 16,
+    color: '#fff',
+  },
+});
+
+const skeletonStyles = StyleSheet.create({
+  container: {
+    paddingTop: 24,
+    paddingHorizontal: 20,
+  },
+  titleBar: {
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#e8e8e8',
+    marginBottom: 20,
+    width: '90%',
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e8e8e8',
+    marginRight: 12,
+  },
+  authorLine: {
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: '#e8e8e8',
+    width: 140,
+  },
+  bodyLine: {
+    height: 16,
+    borderRadius: 4,
+    backgroundColor: '#e8e8e8',
+    marginBottom: 12,
+    width: '100%',
+  },
+  bodyLineShort: {
+    width: '75%',
+  },
+  bodyContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+});
