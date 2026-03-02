@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions, TouchableOpacity, Alert, ActivityIndicator, Animated } from 'react-native'
+import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions, TouchableOpacity, Alert, ActivityIndicator, Animated, LayoutAnimation } from 'react-native'
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import RenderHtml from 'react-native-render-html';
 import Markdown from 'react-native-markdown-display';
@@ -27,6 +27,22 @@ function getArticleIdFromResponse(data) {
     return null;
   };
   return pick(data) ?? pick(data?.article) ?? pick(data?.data) ?? null;
+}
+
+function BounceIconButton({ onPress, style, hitSlop, children }) {
+  const scale = React.useRef(new Animated.Value(1)).current;
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 1.10, duration: 80, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 4, tension: 200 }),
+    ]).start();
+    onPress?.();
+  };
+  return (
+    <TouchableOpacity onPress={handlePress} style={style} hitSlop={hitSlop} activeOpacity={1}>
+      <Animated.View style={{ transform: [{ scale }] }}>{children}</Animated.View>
+    </TouchableOpacity>
+  );
 }
 
 // Define system fonts for HTML rendering
@@ -217,7 +233,7 @@ const Article = () => {
   const { width } = useWindowDimensions();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { isLiked, toggleLike } = useLikes();
-  const { fetchForArticle, addHighlight, getHighlightsForArticle } = useHighlights();
+  const { fetchForArticle, addHighlight, removeHighlight, getHighlightsForArticle } = useHighlights();
   const articleId = articleData?.id ?? item?.id;
   /** Article id for highlights: use article.uuid or article.id (backend accepts either; same value, opaque string). */
   const articleHighlightId =
@@ -230,10 +246,14 @@ const Article = () => {
   const [likeCount, setLikeCount] = useState(null);
   const [saveCount, setSaveCount] = useState(null);
   const webViewRef = useRef(null);
+  const lastHighlightTapRef = useRef({ id: null, at: 0 });
   const [articleBodyHeight, setArticleBodyHeight] = useState(800);
   const [bodyLoaded, setBodyLoaded] = useState(false);
   const [showHighlightBar, setShowHighlightBar] = useState(false);
   const [pendingSelection, setPendingSelection] = useState(null);
+  const [highlightBarLabel, setHighlightBarLabel] = useState('Save highlight');
+  const [removeBarLabel, setRemoveBarLabel] = useState('Remove highlight');
+  const [pendingDeleteHighlightId, setPendingDeleteHighlightId] = useState(null);
   const articleHighlights = articleHighlightId != null ? getHighlightsForArticle(articleHighlightId) : [];
 
   const getArticleDetails = async () => {
@@ -287,6 +307,20 @@ const Article = () => {
     getArticleLikesCount(articleId).then(setLikeCount);
     getArticleBookmarksCount(articleId).then(setSaveCount);
   }, [articleId]);
+
+  const prevLikeCountRef = useRef(likeCount);
+  const prevSaveCountRef = useRef(saveCount);
+  useEffect(() => {
+    const hadLikeCount = prevLikeCountRef.current != null && prevLikeCountRef.current > 0;
+    const hasLikeCount = likeCount != null && likeCount > 0;
+    const hadSaveCount = prevSaveCountRef.current != null && prevSaveCountRef.current > 0;
+    const hasSaveCount = saveCount != null && saveCount > 0;
+    if ((!hadLikeCount && hasLikeCount) || (!hadSaveCount && hasSaveCount)) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
+    prevLikeCountRef.current = likeCount;
+    prevSaveCountRef.current = saveCount;
+  }, [likeCount, saveCount]);
 
   useEffect(() => {
     if (!articleHighlightId) return;
@@ -365,6 +399,8 @@ const Article = () => {
     return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${baseCss}</style></head><body id="article-body">${bodyHtml}</body></html>`;
   }, [articleData?.content]);
 
+  const webViewSource = useMemo(() => (fullHtml ? { html: fullHtml } : null), [fullHtml]);
+
   const getSelectionOffsets = useMemo(
     () => `
 (function() {
@@ -382,9 +418,9 @@ const Article = () => {
     return { text: range.toString().trim(), startOffset: startOffset, endOffset: endOffset };
   }
   function applyHighlights(highlights) {
-    if (!highlights || !highlights.length) return;
     if (!window.__articleBodyHtml) window.__articleBodyHtml = document.body.innerHTML;
     document.body.innerHTML = window.__articleBodyHtml;
+    if (!highlights || !highlights.length) return;
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
     var textNodes = [];
     while (walker.nextNode()) textNodes.push({ node: walker.currentNode, len: walker.currentNode.textContent.length });
@@ -408,6 +444,26 @@ const Article = () => {
       try {
         var mark = document.createElement('mark');
         range.surroundContents(mark);
+        if (h.id && window.ReactNativeWebView) {
+          var hid = h.id;
+          mark.setAttribute('data-highlight-id', hid);
+          mark.style.cursor = 'pointer';
+          function sendTap(highlightId) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'highlightTap', highlightId: highlightId }));
+          }
+          mark.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            sendTap(hid);
+          });
+          mark.addEventListener('touchend', function(ev) {
+            if (ev.target === mark) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              sendTap(hid);
+            }
+          });
+        }
       } catch (e) {}
     }
   }
@@ -451,33 +507,58 @@ const Article = () => {
         }
         if (data.type === 'selection' && data.text) {
           setPendingSelection({ text: data.text, startOffset: data.startOffset, endOffset: data.endOffset });
+          setHighlightBarLabel('Save highlight');
           setShowHighlightBar(true);
+          setPendingDeleteHighlightId(null);
           return;
         }
         if (data.type === 'selectionCleared') {
           setShowHighlightBar(false);
           setPendingSelection(null);
+          setPendingDeleteHighlightId(null);
           return;
         }
         if (data.type === 'highlight' && data.text && articleHighlightId) {
+          const startOffset = data.startOffset;
+          const endOffset = data.endOffset;
+          const hasOffsets = startOffset != null && endOffset != null;
+          const optimisticHighlight = hasOffsets ? { startOffset, endOffset, id: `pending-${Date.now()}` } : null;
+          const listForDisplay = optimisticHighlight ? [...articleHighlights, optimisticHighlight] : articleHighlights;
+          const payloadNow = listForDisplay.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
+          webViewRef.current?.injectJavaScript(
+            `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payloadNow)}); true;`
+          );
           try {
-            await addHighlight(articleHighlightId, {
+            const created = await addHighlight(articleHighlightId, {
               text: data.text,
               startOffset: data.startOffset,
               endOffset: data.endOffset,
             });
-            const list = await fetchForArticle(articleHighlightId);
-            const ranges = (list || []).filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset }));
+            const payloadFinal = [...articleHighlights, created].filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
             webViewRef.current?.injectJavaScript(
-              `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(ranges)}); true;`
+              `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payloadFinal)}); true;`
             );
-            Alert.alert('Highlight saved', 'This passage has been saved to your highlights.');
+            setHighlightBarLabel('Saved');
+            setTimeout(() => { setShowHighlightBar(false); setPendingSelection(null); }, 1200);
           } catch (err) {
+            webViewRef.current?.injectJavaScript(
+              `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(articleHighlights.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id })))}); true;`
+            );
             Alert.alert(
               'Could not save highlight',
               err?.message === 'Not authenticated' ? 'Sign in to save highlights.' : err?.message ?? 'The server may not support highlights yet. Try again later.'
             );
           }
+          return;
+        }
+        if (data.type === 'highlightTap' && data.highlightId && articleHighlightId) {
+          const now = Date.now();
+          if (lastHighlightTapRef.current.id === data.highlightId && now - lastHighlightTapRef.current.at < 800) return;
+          lastHighlightTapRef.current = { id: data.highlightId, at: now };
+          setShowHighlightBar(false);
+          setPendingSelection(null);
+          setRemoveBarLabel('Remove highlight');
+          setPendingDeleteHighlightId(data.highlightId);
           return;
         }
       } catch (e) {
@@ -486,8 +567,29 @@ const Article = () => {
         }
       }
     },
-    [articleHighlightId, addHighlight, fetchForArticle]
+    [articleHighlightId, articleHighlights, addHighlight, removeHighlight, fetchForArticle]
   );
+
+  const handleRemoveHighlightPress = useCallback(async () => {
+    if (!pendingDeleteHighlightId || !articleHighlightId) return;
+    const highlightId = pendingDeleteHighlightId;
+    setRemoveBarLabel('Removed');
+    try {
+      const updatedList = articleHighlights.filter((h) => h.id !== highlightId);
+      const payload = updatedList.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
+      webViewRef.current?.injectJavaScript(
+        `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payload)}); true;`
+      );
+      await removeHighlight(highlightId, articleHighlightId);
+      setTimeout(() => {
+        setPendingDeleteHighlightId(null);
+        setRemoveBarLabel('Remove highlight');
+      }, 1200);
+    } catch (e) {
+      setRemoveBarLabel('Remove highlight');
+      Alert.alert('Could not remove highlight', e?.message ?? 'Try again later.');
+    }
+  }, [articleHighlightId, articleHighlights, pendingDeleteHighlightId, removeHighlight]);
 
   const handleSaveHighlightPress = useCallback(async () => {
     if (!pendingSelection?.text) return;
@@ -495,42 +597,56 @@ const Article = () => {
       Alert.alert("Can't save highlight", "Article ID is missing. Use GET /articles or GET /articles/:id from this backend so the article has id/uuid for highlights.");
       return;
     }
-    if (__DEV__) {
-      console.warn("[Highlights] Save pressed — articleHighlightId:", articleHighlightId);
-    }
+    const text = pendingSelection.text;
+    const startOffset = pendingSelection.startOffset;
+    const endOffset = pendingSelection.endOffset;
+    const hasOffsets = startOffset != null && endOffset != null;
+    const optimisticHighlight = hasOffsets ? { startOffset, endOffset, id: `pending-${Date.now()}` } : null;
+    const listForDisplay = optimisticHighlight ? [...articleHighlights, optimisticHighlight] : articleHighlights;
+    const payloadNow = listForDisplay.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
+    webViewRef.current?.injectJavaScript(
+      `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payloadNow)}); true;`
+    );
+    webViewRef.current?.injectJavaScript('(function(){ if(window.getSelection()) window.getSelection().removeAllRanges(); })(); true;');
     try {
-      await addHighlight(articleHighlightId, {
-        text: pendingSelection.text,
-        startOffset: pendingSelection.startOffset,
-        endOffset: pendingSelection.endOffset,
+      const created = await addHighlight(articleHighlightId, {
+        text,
+        startOffset,
+        endOffset,
       });
-      setShowHighlightBar(false);
-      setPendingSelection(null);
-      webViewRef.current?.injectJavaScript('(function(){ if(window.getSelection()) window.getSelection().removeAllRanges(); })(); true;');
-      const list = await fetchForArticle(articleHighlightId);
-      const ranges = (list || []).filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset }));
+      const payloadFinal = [...articleHighlights, created].filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
       webViewRef.current?.injectJavaScript(
-        `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(ranges)}); true;`
+        `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payloadFinal)}); true;`
       );
-      Alert.alert('Highlight saved', 'This passage has been saved to your highlights.');
+      setHighlightBarLabel('Saved');
+      setTimeout(() => {
+        setShowHighlightBar(false);
+        setPendingSelection(null);
+      }, 1200);
     } catch (err) {
+      webViewRef.current?.injectJavaScript(
+        `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(articleHighlights.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id })))}); true;`
+      );
       Alert.alert(
         'Could not save highlight',
         err?.message === 'Not authenticated' ? 'Sign in to save highlights.' : err?.message ?? 'The server may not support highlights yet. Try again later.'
       );
     }
-  }, [articleHighlightId, pendingSelection, addHighlight, fetchForArticle]);
+  }, [articleHighlightId, articleHighlights, pendingSelection, addHighlight]);
 
   const handleWebViewLoadEnd = useCallback(() => {
     setBodyLoaded(true);
-    const ranges = articleHighlights.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset }));
-    const script = `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(ranges)}); true;`;
+    const payload = articleHighlights.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
+    const script = `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payload)}); true;`;
     setTimeout(() => webViewRef.current?.injectJavaScript(script), 150);
   }, [articleHighlights]);
 
   useEffect(() => {
     setBodyLoaded(false);
   }, [fullHtml]);
+
+  const useWebView = articleId != null && !!fullHtml;
+  const contentReady = !useWebView || bodyLoaded;
 
   if (!articleData) {
     return (
@@ -549,6 +665,113 @@ const Article = () => {
     );
   }
 
+  const contentBlock = (
+    <View
+      style={
+        contentReady
+          ? undefined
+          : {
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              right: 0,
+              height: 600,
+              opacity: 0,
+              overflow: 'hidden',
+              zIndex: -1,
+            }
+      }
+    >
+      <Text style={styles.title}>{articleData.title}</Text>
+      <View>
+        {articleData.authors && articleData.authors.length > 0 &&
+          articleData.authors.map((author, index) => {
+            const normalizedAuthor = {
+              ...author,
+              firstName: author.firstName || (author.name ? author.name.split(' ')[0] : ''),
+              lastName: author.lastName || (author.name ? author.name.split(' ').slice(1).join(' ') : ''),
+              avatar: author.avatar || author.photo?.url || author.photo,
+            };
+            return (
+              <ArticleAuthors author={normalizedAuthor} key={author.id || `article-author-${index}`} />
+            );
+          })}
+        {!articleData.authors && articleData.author && (
+          <ArticleAuthors
+            author={{
+              ...articleData.author,
+              firstName: articleData.author.firstName || (articleData.author.name ? articleData.author.name.split(' ')[0] : ''),
+              lastName: articleData.author.lastName || (articleData.author.name ? articleData.author.name.split(' ').slice(1).join(' ') : ''),
+              avatar: articleData.author.avatar || articleData.author.photo?.url || articleData.author.photo,
+            }}
+            key={articleData.author.id || 'single-author'}
+          />
+        )}
+      </View>
+      {useWebView ? (
+        <View style={[styles.articleBody, { height: bodyLoaded ? articleBodyHeight : 400 }]}>
+          <WebView
+            ref={webViewRef}
+            source={webViewSource}
+            style={styles.webView}
+            scrollEnabled={false}
+            showsVerticalScrollIndicator={false}
+            injectedJavaScript={getSelectionOffsets}
+            onMessage={handleWebViewMessage}
+            onLoadEnd={handleWebViewLoadEnd}
+            originWhitelist={['*']}
+          />
+        </View>
+      ) : (
+        <View>
+          {parseContent(articleData.content || '').map((segment, index) => {
+            if (segment.type === 'markdown') {
+              return (
+                <Markdown key={index} style={markdownStyles}>
+                  {segment.content}
+                </Markdown>
+              );
+            }
+            if (segment.type === 'html') {
+              return (
+                <RenderHtml
+                  key={index}
+                  contentWidth={width - 40}
+                  source={{ html: segment.content }}
+                  tagsStyles={tagsStyles}
+                  systemFonts={systemFonts}
+                />
+              );
+            }
+            return null;
+          })}
+        </View>
+      )}
+      {articleId != null && (
+        <View style={styles.enjoyedCta}>
+          <Text style={styles.enjoyedCtaText} numberOfLines={2}>
+            Enjoyed this article? Consider liking it to support the author.
+          </Text>
+          <View style={styles.enjoyedCtaRow}>
+            <BounceIconButton
+              onPress={async () => {
+                await toggleLike(articleId);
+                getArticleLikesCount(articleId).then(setLikeCount);
+              }}
+              style={styles.enjoyedCtaLikeButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Ionicons name={liked ? 'heart' : 'heart-outline'} size={26} color={liked ? '#e74c3c' : '#357db5'} />
+            </BounceIconButton>
+            {likeCount != null && likeCount > 0 && (
+              <Text style={styles.enjoyedCtaCount}>{formatCount(likeCount)}</Text>
+            )}
+          </View>
+        </View>
+      )}
+    </View>
+  );
+
   return (
     <View style={styles.wrapper}>
       <View style={[styles.statusBarFill, { height: insets.top }]} />
@@ -559,133 +782,43 @@ const Article = () => {
         </TouchableOpacity>
         {articleId != null && (
           <View style={styles.headerBookmarkRow}>
-            <TouchableOpacity
-              onPress={async () => {
-                await toggleLike(articleId);
-                getArticleLikesCount(articleId).then(setLikeCount);
-              }}
-              style={styles.headerActionButton}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <Ionicons name={liked ? "heart" : "heart-outline"} size={26} color={liked ? "#e74c3c" : "#357db5"} />
-            </TouchableOpacity>
-            {likeCount != null && likeCount > 0 && (
-              <Text style={styles.headerCountText}>{formatCount(likeCount)}</Text>
-            )}
-            <TouchableOpacity
-              onPress={async () => {
-                const meta = { title: articleData?.title, slug: articleData?.slug, authors: articleData?.authors };
-                await toggleBookmark(articleId, meta);
-                getArticleBookmarksCount(articleId).then(setSaveCount);
-              }}
-              style={styles.bookmarkButton}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={26} color="#357db5" />
-            </TouchableOpacity>
-            {saveCount != null && saveCount > 0 && (
-              <Text style={styles.headerCountText}>{formatCount(saveCount)}</Text>
-            )}
+            <View style={styles.headerIconWithCount}>
+              <BounceIconButton
+                onPress={async () => {
+                  await toggleLike(articleId);
+                  getArticleLikesCount(articleId).then(setLikeCount);
+                }}
+                style={styles.headerActionButton}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name={liked ? 'heart' : 'heart-outline'} size={26} color={liked ? '#e74c3c' : '#357db5'} />
+              </BounceIconButton>
+              {likeCount != null && likeCount > 0 && (
+                <Text style={styles.headerCountText}>{formatCount(likeCount)}</Text>
+              )}
+            </View>
+            <View style={styles.headerIconWithCount}>
+              <BounceIconButton
+                onPress={async () => {
+                  const meta = { title: articleData?.title, slug: articleData?.slug, authors: articleData?.authors };
+                  await toggleBookmark(articleId, meta);
+                  getArticleBookmarksCount(articleId).then(setSaveCount);
+                }}
+                style={styles.bookmarkButton}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={26} color="#357db5" />
+              </BounceIconButton>
+              {saveCount != null && saveCount > 0 && (
+                <Text style={styles.headerCountText}>{formatCount(saveCount)}</Text>
+              )}
+            </View>
           </View>
         )}
       </View>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-      <Text style={styles.title}>{articleData.title}</Text>
-    <View>
-        {/* Handle multiple authors */}
-        {articleData.authors && articleData.authors.length > 0 && 
-          articleData.authors.map((author, index) => {
-            // Normalize author object to ensure it has the expected structure
-            const normalizedAuthor = {
-              ...author,
-              firstName: author.firstName || (author.name ? author.name.split(' ')[0] : ''),
-              lastName: author.lastName || (author.name ? author.name.split(' ').slice(1).join(' ') : ''),
-              avatar: author.avatar || author.photo?.url || author.photo
-            };
-            return (
-              <ArticleAuthors author={normalizedAuthor} key={author.id || `article-author-${index}`} />
-            );
-          })
-        }
-        {/* Handle single author */}
-        {!articleData.authors && articleData.author && (
-          <ArticleAuthors 
-            author={{
-              ...articleData.author,
-              firstName: articleData.author.firstName || (articleData.author.name ? articleData.author.name.split(' ')[0] : ''),
-              lastName: articleData.author.lastName || (articleData.author.name ? articleData.author.name.split(' ').slice(1).join(' ') : ''),
-              avatar: articleData.author.avatar || articleData.author.photo?.url || articleData.author.photo
-            }} 
-            key={articleData.author.id || 'single-author'} 
-          />
-        )}
-    </View>
-
-    {articleId != null && fullHtml ? (
-      <View style={[styles.articleBody, { height: bodyLoaded ? articleBodyHeight : 240 }]}>
-        {!bodyLoaded ? (
-          <View style={styles.bodyLoading}>
-            <BodySkeleton />
-          </View>
-        ) : null}
-        <WebView
-          ref={webViewRef}
-          source={{ html: fullHtml }}
-          style={[styles.webView, !bodyLoaded && styles.webViewHidden]}
-          scrollEnabled={false}
-          showsVerticalScrollIndicator={false}
-          injectedJavaScript={getSelectionOffsets}
-          onMessage={handleWebViewMessage}
-          onLoadEnd={handleWebViewLoadEnd}
-          originWhitelist={['*']}
-        />
-      </View>
-    ) : (
-      <View>
-        {parseContent(articleData.content || '').map((segment, index) => {
-          if (segment.type === 'markdown') {
-            return (
-              <Markdown key={index} style={markdownStyles}>
-                {segment.content}
-              </Markdown>
-            );
-          } else if (segment.type === 'html') {
-            return (
-              <RenderHtml
-                key={index}
-                contentWidth={width - 40}
-                source={{ html: segment.content }}
-                tagsStyles={tagsStyles}
-                systemFonts={systemFonts}
-              />
-            );
-          }
-          return null;
-        })}
-      </View>
-    )}
-    {articleId != null && (
-      <View style={styles.enjoyedCta}>
-        <Text style={styles.enjoyedCtaText} numberOfLines={2}>
-          Enjoyed this article? Consider liking it to support the author.
-        </Text>
-        <View style={styles.enjoyedCtaRow}>
-          <TouchableOpacity
-            onPress={async () => {
-              await toggleLike(articleId);
-              getArticleLikesCount(articleId).then(setLikeCount);
-            }}
-            style={styles.enjoyedCtaLikeButton}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Ionicons name={liked ? "heart" : "heart-outline"} size={26} color={liked ? "#e74c3c" : "#357db5"} />
-          </TouchableOpacity>
-          {likeCount != null && likeCount > 0 && (
-            <Text style={styles.enjoyedCtaCount}>{formatCount(likeCount)}</Text>
-          )}
-        </View>
-      </View>
-    )}
+        {!contentReady && <ArticleSkeleton />}
+        {contentBlock}
       </ScrollView>
     {showHighlightBar && pendingSelection?.text ? (
       <View style={[styles.highlightBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
@@ -695,7 +828,19 @@ const Article = () => {
           activeOpacity={0.8}
         >
           <Ionicons name="bookmark" size={20} color="#fff" />
-          <Text style={styles.highlightBarLabel}>Save highlight</Text>
+          <Text style={styles.highlightBarLabel}>{highlightBarLabel}</Text>
+        </TouchableOpacity>
+      </View>
+    ) : null}
+    {pendingDeleteHighlightId ? (
+      <View style={[styles.highlightBar, styles.highlightBarRemove, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <TouchableOpacity
+          style={styles.highlightBarButton}
+          onPress={handleRemoveHighlightPress}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="trash-outline" size={20} color="#fff" />
+          <Text style={styles.highlightBarLabel}>{removeBarLabel}</Text>
         </TouchableOpacity>
       </View>
     ) : null}
@@ -791,6 +936,11 @@ const styles = StyleSheet.create({
   headerBookmarkRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
+  },
+  headerIconWithCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 2,
   },
   headerActionButton: {
@@ -801,7 +951,6 @@ const styles = StyleSheet.create({
     fontFamily: 'sans_regular',
     fontSize: 14,
     color: '#666',
-    marginLeft: 4,
   },
   backLabel: {
     fontFamily: 'sans_semibold',
@@ -844,7 +993,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    paddingBottom: 8,
+    paddingBottom: 20,
     fontWeight: 'bold',
     textAlign: 'left',
     fontFamily: 'sans_semibold',
@@ -892,6 +1041,9 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  highlightBarRemove: {
+    backgroundColor: '#c0392b',
   },
   highlightBarButton: {
     flexDirection: 'row',

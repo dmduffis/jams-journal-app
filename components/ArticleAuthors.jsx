@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row', 
     alignItems: 'center', 
-    paddingBottom: 30
+    paddingBottom: 12
   },
   authorPhoto: {
     width: 35, 

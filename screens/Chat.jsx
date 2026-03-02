@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     padding: 15,
-    paddingBottom: 85, // Space above tab bar (70px + 15px)
+    paddingBottom: 92, // Space above tab bar (76px + extra padding)
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',

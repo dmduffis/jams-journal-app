@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
       borderColor: '#5a87b7',
       backgroundColor: '#5a87b7',
       borderWidth: 1,
-      borderRadius:12,
+      borderRadius: 9999,
   },
   followedBtn: {
     marginTop: 7,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderColor: '#5a87b7',
     borderWidth: 1,
-    borderRadius:12,
+    borderRadius: 9999,
 },
     followTxt: {
       fontFamily: 'sans_medium',

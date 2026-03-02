@@ -31,7 +31,7 @@ const UserProfile = () => {
   const navigation = useNavigation();
   const { followedAuthors, loadingFollows } = useContext(AuthorContext);
   const { bookmarkedIds, bookmarkMeta } = useBookmarks();
-  const { allHighlights, fetchAll: fetchHighlights } = useHighlights();
+  const { allHighlights, fetchAll: fetchHighlights, removeHighlight } = useHighlights();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState(TAB_FOLLOWING);
   const [followingList, setFollowingList] = useState([]);
@@ -180,22 +180,55 @@ const UserProfile = () => {
     );
   };
 
+  const handleDeleteHighlight = useCallback(
+    (highlight) => {
+      Alert.alert(
+        "Remove highlight",
+        "Remove this saved passage from your highlights?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await removeHighlight(highlight.id, highlight.articleId);
+              } catch (e) {
+                Alert.alert("Could not remove highlight", e?.message ?? "Try again later.");
+              }
+            },
+          },
+        ]
+      );
+    },
+    [removeHighlight]
+  );
+
   const renderHighlightItem = ({ item: highlight }) => {
     const snippet = (highlight.text || "").trim();
     const displayText = snippet.length > 120 ? snippet.slice(0, 120) + "…" : snippet;
     const articleItem = { id: highlight.articleId };
 
     return (
-      <TouchableOpacity
-        style={styles.highlightItem}
-        onPress={() => navigation.navigate("Article", { item: articleItem })}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.highlightSnippet} numberOfLines={3}>
-          {displayText || "Saved passage"}
-        </Text>
-        <Text style={styles.highlightLink}>View article</Text>
-      </TouchableOpacity>
+      <View style={styles.highlightItem}>
+        <TouchableOpacity
+          style={styles.highlightItemContent}
+          onPress={() => navigation.navigate("Article", { item: articleItem })}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.highlightSnippet} numberOfLines={3}>
+            {displayText || "Saved passage"}
+          </Text>
+          <Text style={styles.highlightLink}>View article</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.highlightDeleteButton}
+          onPress={() => handleDeleteHighlight(highlight)}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Ionicons name="trash-outline" size={22} color="#999" />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -545,10 +578,19 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   highlightItem: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#eee",
+  },
+  highlightItemContent: {
+    flex: 1,
+  },
+  highlightDeleteButton: {
+    padding: 8,
+    marginLeft: 4,
   },
   highlightSnippet: {
     fontFamily: "serif_regular",

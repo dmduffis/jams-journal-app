@@ -1,11 +1,27 @@
-import { StyleSheet, Text, View, TouchableOpacity, Alert } from "react-native";
-import React, { useState, useEffect } from "react";
+import { StyleSheet, Text, View, TouchableOpacity, Alert, Animated } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useBookmarks } from "../context/BookmarkContext";
 import { useLikes } from "../context/LikeContext";
 import { getArticleLikesCount, getArticleBookmarksCount } from "../lib/jamsBackend";
 import { formatCount } from "../lib/formatCount";
+
+function BounceIconButton({ onPress, style, hitSlop, children }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 1.10, duration: 80, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 4, tension: 200 }),
+    ]).start();
+    onPress?.();
+  };
+  return (
+    <TouchableOpacity onPress={handlePress} style={style} hitSlop={hitSlop} activeOpacity={1}>
+      <Animated.View style={{ transform: [{ scale }] }}>{children}</Animated.View>
+    </TouchableOpacity>
+  );
+}
 
 function authorNames(authors) {
   if (!Array.isArray(authors) || authors.length === 0) return null;
@@ -71,23 +87,23 @@ const TopArticlesItem = ({ item, noData, dataExists, idx }) => {
         {articleId != null && (
           <View style={styles.actionStack}>
             <View style={[styles.actionCell, styles.actionCellFirst]}>
-              <TouchableOpacity
+              <BounceIconButton
                 onPress={onPressLike}
                 style={styles.iconButton}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? "#e74c3c" : "#357db5"} />
-              </TouchableOpacity>
+              </BounceIconButton>
               {likeCount > 0 && <Text style={styles.iconCount}>{formatCount(likeCount)}</Text>}
             </View>
             <View style={styles.actionCell}>
-              <TouchableOpacity
+              <BounceIconButton
                 onPress={onPressBookmark}
                 style={styles.iconButton}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={20} color="#357db5" />
-              </TouchableOpacity>
+              </BounceIconButton>
               {saveCount > 0 && <Text style={styles.iconCount}>{formatCount(saveCount)}</Text>}
             </View>
           </View>
