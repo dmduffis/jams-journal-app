@@ -36,7 +36,6 @@ const TopArticles = () => {
       } else if (data && Array.isArray(data.data)) {
         articlesArray = data.data;
       } else {
-        console.warn('Article data is not in expected format:', data);
         setArticleData([]);
         return;
       }

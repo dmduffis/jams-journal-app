@@ -155,7 +155,7 @@ export default function App() {
     const subReceived = Notifications.addNotificationReceivedListener(() => {
       notificationRefetchTriggerRef.current?.();
     });
-    return () => Notifications.removeNotificationSubscription(subReceived);
+    return () => subReceived.remove();
   }, []);
 
   // When user taps a push, navigate and refresh in-app list
@@ -166,7 +166,7 @@ export default function App() {
       tryNavigateFromNotification(data);
       notificationRefetchTriggerRef.current?.();
     });
-    return () => Notifications.removeNotificationSubscription(subscription);
+    return () => subscription.remove();
   }, [tryNavigateFromNotification]);
 
   const onNavigationReady = useCallback(() => {

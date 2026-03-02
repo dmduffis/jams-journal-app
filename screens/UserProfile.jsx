@@ -8,10 +8,12 @@ import {
   ActivityIndicator,
   FlatList,
   Alert,
+  Animated,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useEffect, useContext, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useContext, useCallback, useMemo, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../lib/supabase";
 import { AuthorContext } from "../context/AuthorContext";
@@ -39,6 +41,23 @@ const UserProfile = () => {
   const [bookmarksList, setBookmarksList] = useState([]);
   const [loadingBookmarks, setLoadingBookmarks] = useState(false);
   const [loadingHighlights, setLoadingHighlights] = useState(false);
+  const { width } = useWindowDimensions();
+  const indicatorPos = useRef(new Animated.Value(0)).current;
+
+  const tabIndex = activeTab === TAB_FOLLOWING ? 0 : activeTab === TAB_SAVED ? 1 : 2;
+  useEffect(() => {
+    Animated.spring(indicatorPos, {
+      toValue: tabIndex,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 80,
+    }).start();
+  }, [tabIndex]);
+
+  const indicatorTranslateX = indicatorPos.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [0, width / 3, (2 * width) / 3],
+  });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u));
@@ -107,6 +126,11 @@ const UserProfile = () => {
       setLoadingHighlights(false);
     }
   }, [fetchHighlights]);
+
+  // Load highlights on mount so the tab count shows immediately
+  useEffect(() => {
+    loadHighlights();
+  }, [loadHighlights]);
 
   useEffect(() => {
     if (activeTab === TAB_HIGHLIGHTS) loadHighlights();
@@ -251,17 +275,10 @@ const UserProfile = () => {
       </View>
 
       <View style={styles.tabBar}>
-        <View
+        <Animated.View
           style={[
             styles.tabIndicator,
-            {
-              left:
-                activeTab === TAB_FOLLOWING
-                  ? "0%"
-                  : activeTab === TAB_SAVED
-                    ? "33.33%"
-                    : "66.66%",
-            },
+            { width: width / 3, transform: [{ translateX: indicatorTranslateX }] },
           ]}
         />
         <TouchableOpacity
@@ -465,8 +482,8 @@ const styles = StyleSheet.create({
   },
   tabIndicator: {
     position: "absolute",
+    left: 0,
     bottom: 0,
-    width: "33.33%",
     height: 3,
     backgroundColor: "#357db5",
   },

@@ -269,7 +269,6 @@ const Article = () => {
           const fromTop = data.uuid ?? data.article?.uuid ?? data.data?.uuid;
           if (fromTop != null) article.uuid = typeof fromTop === "string" ? fromTop.trim() : String(fromTop);
         }
-        if (__DEV__) console.warn("[Article] article.uuid:", article?.uuid, "keys:", article ? Object.keys(article) : []);
         if (article.authors && Array.isArray(article.authors)) {
           article.authors = article.authors
             .map(authorItem => {

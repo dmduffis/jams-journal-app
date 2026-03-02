@@ -13,8 +13,7 @@ const AuthorProvider = ({ children }) => {
       setLoadingFollows(true);
       const ids = await getFollows();
       setFollowedAuthors(Array.isArray(ids) ? ids : []);
-    } catch (e) {
-      console.warn("[AuthorContext] Failed to load follows:", e?.message ?? e);
+    } catch (_e) {
       setFollowedAuthors([]);
     } finally {
       setLoadingFollows(false);
@@ -42,8 +41,7 @@ const AuthorProvider = ({ children }) => {
     setFollowedAuthors((prev) => (prev.includes(id) ? prev : [...prev, id]));
     try {
       await apiAddFollow(id);
-    } catch (e) {
-      console.warn("[AuthorContext] addFollow failed:", e?.message ?? e);
+    } catch (_e) {
       setFollowedAuthors((prev) => prev.filter((x) => x !== id));
     }
   }, []);
@@ -53,8 +51,7 @@ const AuthorProvider = ({ children }) => {
     setFollowedAuthors((prev) => prev.filter((x) => x !== id));
     try {
       await apiRemoveFollow(id);
-    } catch (e) {
-      console.warn("[AuthorContext] removeFollow failed:", e?.message ?? e);
+    } catch (_e) {
       setFollowedAuthors((prev) => (prev.includes(id) ? prev : [...prev, id]));
     }
   }, []);

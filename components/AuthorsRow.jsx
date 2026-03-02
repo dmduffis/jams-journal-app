@@ -37,7 +37,6 @@ const getAuthorData = async () => {
     } else if (data && Array.isArray(data.data)) {
       authorsArray = data.data;
     } else {
-      console.warn('Author data is not in expected format:', data);
       setAuthorData([]);
       return;
     }

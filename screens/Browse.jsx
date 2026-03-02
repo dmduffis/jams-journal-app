@@ -1,5 +1,5 @@
-import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import { View, StyleSheet, Text, TouchableOpacity, Animated, useWindowDimensions } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
 import Header from "../components/Header";
 import BrowseJournals from "./BrowseJournals";
 import BrowseAuthors from "./BrowseAuthors";
@@ -9,15 +9,31 @@ const TAB_AUTHORS = "authors";
 
 const Browse = () => {
   const [activeTab, setActiveTab] = useState(TAB_JOURNALS);
+  const { width } = useWindowDimensions();
+  const indicatorPos = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(indicatorPos, {
+      toValue: activeTab === TAB_JOURNALS ? 0 : 1,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 80,
+    }).start();
+  }, [activeTab]);
+
+  const indicatorTranslateX = indicatorPos.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, width / 2],
+  });
 
   return (
     <View style={styles.container}>
       <Header />
       <View style={styles.tabBar}>
-        <View
+        <Animated.View
           style={[
             styles.tabIndicator,
-            { left: activeTab === TAB_JOURNALS ? 0 : "50%" },
+            { width: width / 2, transform: [{ translateX: indicatorTranslateX }] },
           ]}
         />
         <TouchableOpacity
@@ -62,8 +78,8 @@ const styles = StyleSheet.create({
   },
   tabIndicator: {
     position: "absolute",
+    left: 0,
     bottom: 0,
-    width: "50%",
     height: 3,
     backgroundColor: "#357db5",
   },
