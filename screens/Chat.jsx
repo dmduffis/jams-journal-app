@@ -11,8 +11,8 @@ import {
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Header from '../components/Header';
 import { useNavigation } from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
 
@@ -188,18 +188,7 @@ const Chat = () => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Ionicons name="chatbubbles" size={24} color="#357db5" />
-            <Text style={styles.headerTitle}>AI Research Assistant</Text>
-          </View>
-          <TouchableOpacity onPress={clearChat} style={styles.clearButton}>
-            <Ionicons name="trash-outline" size={20} color="#666" />
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      <Header />
 
       {/* Messages */}
       <FlatList
@@ -230,7 +219,7 @@ const Chat = () => {
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Ask about mission studies..."
+            placeholder="e.g. What is integral mission?"
             placeholderTextColor="#999"
             multiline
             maxLength={500}
@@ -348,34 +337,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  safeArea: {
-    backgroundColor: '#fff',
-  },
   messagesContainer: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  headerTitle: {
-    fontFamily: 'sans_bold',
-    fontSize: 18,
-    color: '#333',
-  },
-  clearButton: {
-    padding: 5,
   },
   messagesList: {
     padding: 15,

@@ -1,10 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { StyleSheet, View, Text, TextInput, FlatList, TouchableWithoutFeedback, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import SearchListItem from '../components/SearchListItem';
-import { Keyboard } from 'react-native'
+import { Keyboard } from 'react-native';
+import Header from '../components/Header';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const TAB_BAR_HEIGHT = 76;
 
 function Search() {
+  const insets = useSafeAreaInsets();
+  const listBottomPadding = TAB_BAR_HEIGHT + insets.bottom + 24;
   const [searchInput, setSearchInput] = useState('');
   const [articleData, setArticleData] = useState([]);
   const [dataExists, setDataExists] = useState(false);
@@ -128,14 +134,14 @@ function Search() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <SafeAreaView style={{marginBottom: 100}}>
-        <View>
-          <Text style={styles.pageTitle}>Explore</Text>
+      <View style={styles.wrapper}>
+        <Header />
+        <View style={styles.headerSection}>
           <TextInput 
             style={styles.input}
             onChangeText={setSearchInput}
             value={searchInput}
-            placeholder="Search articles by meaning..."
+            placeholder="e.g. contextual theology, migration"
             placeholderTextColor="#999"
           />
         </View>
@@ -156,10 +162,8 @@ function Search() {
 
           {!loading && !error && searchInput.length === 0 && (
             <View style={styles.emptyContainer}>
+              <Ionicons name="search" size={48} color="#ccc" style={styles.emptyIcon} />
               <Text style={styles.emptyText}>Search for articles</Text>
-              <Text style={styles.emptySubtext}>
-                Try: "cross-cultural ministry", "contextualization", or "worldview"
-              </Text>
             </View>
           )}
 
@@ -178,11 +182,12 @@ function Search() {
               vertical
               showsVerticalScrollIndicator={false}
               removeClippedSubviews={true}
-              contentContainerStyle={{columnGap: 10}}
+              contentContainerStyle={[styles.listContent, { columnGap: 10, paddingBottom: listBottomPadding }]}
+              style={styles.list}
             />
           )}
         </View>
-      </SafeAreaView>
+      </View>
     </TouchableWithoutFeedback>
   );
 }
@@ -190,30 +195,40 @@ function Search() {
 export default Search;
 
 const styles = StyleSheet.create({
-  container: {
-    paddingBottom: 50,
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#fff',
   },
+  headerSection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e0e0e0',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  list: {
+    backgroundColor: '#fff',
+  },
+  listContent: {},
   input: {
-    height: 45,
-    marginLeft: 12,
-    marginRight: 12,
-    marginTop: 20,
+    minHeight: 50,
+    marginLeft: 0,
+    marginRight: 0,
+    marginTop: 12,
     marginBottom: 20,
     borderWidth: 0.2,
     borderRadius: 30,
-    padding: 15,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     backgroundColor: '#FFF',
     fontFamily: 'sans_regular',
     fontSize: 15,
-  },
-  pageTitle: {
-    fontFamily: 'sans_bold',
-    fontSize: 26,
-    marginBottom: 5,
-    color: '#357db5',
-    paddingLeft: 20,
-    paddingRight: 20,
-    paddingTop: 20,
+    lineHeight: 20,
   },
   subtitle: {
     fontFamily: 'sans_regular',
@@ -249,17 +264,12 @@ const styles = StyleSheet.create({
     padding: 40,
     alignItems: 'center',
   },
+  emptyIcon: {
+    marginBottom: 12,
+  },
   emptyText: {
     fontFamily: 'sans_semibold',
     fontSize: 16,
     color: '#333',
-    marginBottom: 10,
-  },
-  emptySubtext: {
-    fontFamily: 'sans_regular',
-    fontSize: 13,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });

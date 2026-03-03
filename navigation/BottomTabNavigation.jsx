@@ -38,6 +38,7 @@ const screenOptions = {
     tabBarHideOnKeyboard: true,
     headerShown: false,
     tabBarButton: (props) => <BounceTabButton {...props} />,
+    sceneContainerStyle: { backgroundColor: '#fff' },
     tabBarStyle: {
         position: "absolute",
         bottom: 0,

@@ -44,7 +44,7 @@ if (error) return `Error! ${error}`;
     vertical
     showsVerticalScrollIndicator={false}
     removeClippedSubviews={true}
-    contentContainerStyle={{columnGap: 10 }}>
+    contentContainerStyle={{ columnGap: 10, paddingBottom: 100 }}>
     </FlatList>
     </View>
   )
