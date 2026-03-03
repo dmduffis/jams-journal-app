@@ -420,10 +420,7 @@ const Article = () => {
     if (!window.__articleBodyHtml) window.__articleBodyHtml = document.body.innerHTML;
     document.body.innerHTML = window.__articleBodyHtml;
     if (!highlights || !highlights.length) return;
-    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-    var textNodes = [];
-    while (walker.nextNode()) textNodes.push({ node: walker.currentNode, len: walker.currentNode.textContent.length });
-    function getNodeAt(offset) {
+    function getNodeAtOffset(textNodes, offset) {
       var pos = 0;
       for (var i = 0; i < textNodes.length; i++) {
         if (offset <= pos + textNodes[i].len) return { node: textNodes[i].node, offset: Math.min(offset - pos, textNodes[i].len) };
@@ -431,11 +428,25 @@ const Article = () => {
       }
       return null;
     }
+    function collectTextNodes() {
+      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+      var list = [];
+      while (walker.nextNode()) list.push({ node: walker.currentNode, len: walker.currentNode.textContent.length });
+      return list;
+    }
     highlights.sort(function(a,b) { return (a.startOffset||0) - (b.startOffset||0); });
-    for (var i = 0; i < highlights.length; i++) {
+    for (var i = highlights.length - 1; i >= 0; i--) {
+      var textNodes = collectTextNodes();
+      var totalLen = 0;
+      for (var t = 0; t < textNodes.length; t++) totalLen += textNodes[t].len;
+      if (totalLen === 0) continue;
       var h = highlights[i];
-      var start = getNodeAt(h.startOffset || 0);
-      var end = getNodeAt(h.endOffset || h.startOffset || 0);
+      var s = Math.max(0, Math.min(h.startOffset != null ? h.startOffset : 0, totalLen));
+      var e = Math.min(h.endOffset != null ? h.endOffset : totalLen, totalLen);
+      if (e <= s) e = Math.min(s + 1, totalLen);
+      if (e <= s) continue;
+      var start = getNodeAtOffset(textNodes, s);
+      var end = getNodeAtOffset(textNodes, e);
       if (!start || !end) continue;
       var range = document.createRange();
       range.setStart(start.node, start.offset);
@@ -514,7 +525,6 @@ const Article = () => {
         if (data.type === 'selectionCleared') {
           setShowHighlightBar(false);
           setPendingSelection(null);
-          setPendingDeleteHighlightId(null);
           return;
         }
         if (data.type === 'highlight' && data.text && articleHighlightId) {
@@ -576,9 +586,13 @@ const Article = () => {
     try {
       const updatedList = articleHighlights.filter((h) => h.id !== highlightId);
       const payload = updatedList.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
-      webViewRef.current?.injectJavaScript(
-        `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payload)}); true;`
-      );
+      const script = `(function(){
+        if (window.__applyHighlights) {
+          window.__applyHighlights(${JSON.stringify(payload)});
+          setTimeout(function() { window.__applyHighlights(${JSON.stringify(payload)}); }, 0);
+        }
+      })(); true;`;
+      webViewRef.current?.injectJavaScript(script);
       await removeHighlight(highlightId, articleHighlightId);
       setTimeout(() => {
         setPendingDeleteHighlightId(null);
@@ -613,7 +627,13 @@ const Article = () => {
         startOffset,
         endOffset,
       });
-      const payloadFinal = [...articleHighlights, created].filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
+      // Ensure created has offsets (API may omit them); otherwise we'd filter it out and applyHighlights([]) would clear the blue
+      const createdWithOffsets = {
+        ...created,
+        startOffset: created.startOffset ?? startOffset,
+        endOffset: created.endOffset ?? endOffset,
+      };
+      const payloadFinal = [...articleHighlights, createdWithOffsets].filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
       webViewRef.current?.injectJavaScript(
         `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payloadFinal)}); true;`
       );
@@ -635,10 +655,16 @@ const Article = () => {
 
   const handleWebViewLoadEnd = useCallback(() => {
     setBodyLoaded(true);
+  }, []);
+
+  // Apply highlights when WebView has loaded (onLoadEnd sets bodyLoaded)
+  useEffect(() => {
+    if (!bodyLoaded || !webViewRef.current) return;
     const payload = articleHighlights.filter((h) => h.startOffset != null && h.endOffset != null).map((h) => ({ startOffset: h.startOffset, endOffset: h.endOffset, id: h.id }));
     const script = `window.__applyHighlights && window.__applyHighlights(${JSON.stringify(payload)}); true;`;
-    setTimeout(() => webViewRef.current?.injectJavaScript(script), 150);
-  }, [articleHighlights]);
+    const t = setTimeout(() => webViewRef.current?.injectJavaScript(script), 100);
+    return () => clearTimeout(t);
+  }, [bodyLoaded, articleHighlights]);
 
   useEffect(() => {
     setBodyLoaded(false);
